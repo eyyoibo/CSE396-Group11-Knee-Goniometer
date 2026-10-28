@@ -54,3 +54,11 @@ htmlcov/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Internal Team Roadmap & Plans (Private - Not pushed to public repository)
+*plan*.tex
+*plan*.pdf
+*plan*.aux
+*plan*.log
+*plan*.out
+docs/*plan*
