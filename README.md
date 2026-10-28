@@ -15,7 +15,8 @@
 * **Academic Advisor:** Prof. Dr. Erkan Zergeroğlu  
 * **Group:** Group 11  
 * **Repository:** [eyyoibo/CSE396-Group11-Knee-Goniometer](https://github.com/eyyoibo/CSE396-Group11-Knee-Goniometer)  
-* **Proposal Document:** [docs/Group11_Proposal.pdf](docs/Group11_Proposal.pdf)
+* **Proposal Document:** [docs/Group11_Proposal.pdf](docs/Group11_Proposal.pdf)  
+* **Master Project Plan & Roadmap:** [docs/plan.pdf](docs/plan.pdf) | [docs/plan.tex](docs/plan.tex)
 
 | Member | Role / Assigned Modules |
 | :--- | :--- |
@@ -100,7 +101,10 @@ CSE396-Group11-Knee-Goniometer/
 │   └── workflows/
 │       └── ci_tests.yml       # Automated GitHub Actions Flake8 + Pytest CI
 ├── docs/
-│   └── Group11_Proposal.pdf   # Official CSE396 Project Proposal Document
+│   ├── Group11_Proposal.pdf   # Official CSE396 Project Proposal Document (GTU)
+│   ├── Group11_Proposal.tex   # LaTeX source for proposal
+│   ├── plan.pdf               # 7-Page Master Project Plan & Roadmap
+│   └── plan.tex               # LaTeX source for Master Project Plan
 ├── firmware_esp32/            # Module 1: ESP32 C++ Arduino Firmware
 │   └── esp32_encoder.ino      # Quadrature ISRs, PCNT, and Bluetooth SPP streaming
 ├── src/                       # Python Core Modules
@@ -110,7 +114,9 @@ CSE396-Group11-Knee-Goniometer/
 │   └── gui_app.py             # Module 4: Real-time GUI dashboard and stream sync
 ├── tests/                     # Module 5: Automated Test Suite
 │   └── test_angles.py         # Pytest unit tests for kinematics & vision math
+├── CLAUDE.md                  # Claude Code team development & skill instructions
 ├── .gitignore                 # Standard Python & embedded gitignore
+├── pyproject.toml             # Pytest configuration & pythonpath
 ├── requirements.txt           # Project dependencies
 └── README.md                  # Project overview and technical documentation
 ```

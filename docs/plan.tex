@@ -1,0 +1,312 @@
+\documentclass[11pt, a4paper]{article}
+
+\usepackage[a4paper, margin=2.2cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\renewcommand{\familydefault}{\sfdefault}
+
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage[table]{xcolor}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage[hidelinks]{hyperref}
+
+% Corporate & Academic Palette
+\definecolor{primary}{RGB}{25, 84, 156}      % Navy Blue
+\definecolor{secondary}{RGB}{41, 128, 185}   % GTU Cyan/Blue
+\definecolor{accentgreen}{RGB}{39, 174, 96}  % Success Green
+\definecolor{accentamber}{RGB}{211, 84, 0}   % Warning/Action Orange
+\definecolor{lightgray}{RGB}{246, 248, 250}  % Light Gray
+\definecolor{darkgray}{RGB}{60, 60, 60}
+\definecolor{codebg}{RGB}{245, 247, 250}
+
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0pt}
+
+% Code listing configuration
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\footnotesize\ttfamily,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{lightgray},
+    keywordstyle=\color{primary}\bfseries,
+    commentstyle=\color{darkgray}\itshape,
+    stringstyle=\color{accentamber},
+    showstringspaces=false
+}
+
+\begin{document}
+
+% --- TITLE BLOCK ---
+\begin{center}
+    {\LARGE \textbf{\textcolor{primary}{CSE 396 BİLGİSAYAR MÜHENDİSLİĞİ PROJESİ}}}\\[0.3em]
+    {\Large \textbf{\textcolor{secondary}{Grup 11: Uçtan Uca Master Proje Planı ve Yol Haritası}}}\\[0.4em]
+    {\normalsize \textbf{Wireless Wearable Dual-Encoder Knee Goniometer \& Vision-Based Lower-Limb Kinematics Analyzer}}\\[0.6em]
+    \textbf{Danışman:} Prof. Dr. Erkan Zergeroğlu \quad $\vert$ \quad \textbf{Kurum:} Gebze Teknik Üniversitesi
+\end{center}
+\vspace{0.3em}
+\hrule height 1.5pt
+\vspace{0.8em}
+
+\section{Proje Kimliği ve Ekip Organizasyonu}
+
+\begin{itemize}[leftmargin=1.5em, itemsep=0.2em]
+    \item \textbf{Proje Başlığı:} Wireless Wearable Dual-Encoder Knee Goniometer and Vision-Based Lower-Limb Kinematics Analyzer
+    \item \textbf{GitHub Deposu:} \texttt{https://github.com/eyyoibo/CSE396-Group11-Knee-Goniometer}
+    \item \textbf{Danışman Öğretim Üyesi:} Prof. Dr. Erkan Zergeroğlu
+    \item \textbf{Dönem \& Ders:} 2026--2027 Güz / CSE 396 Computer Engineering Project
+\end{itemize}
+
+\subsection*{Ekip Üyeleri ve Görev Dağılımı}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{3.8cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{4cm}}
+\toprule
+\rowcolor{lightgray} Öğrenci & Birincil Sorumluluk Modülleri & Temel Çıktılar \\
+\midrule
+İbrahim Halil Doğan & Modül 1 (ESP32 Donanım) + Modül 2 (Kinematik) + Modül 5 (CI/CD) & ESP32 FreeRTOS/ISR firmware, Bluetooth SPP telemetri, GitHub Actions test altyapısı \\
+\midrule
+Mert Canoğlu & Modül 1 (Mekanik \& Donanım) + Modül 3 (MediaPipe Vision) & Dizlik montajı, enkoder eksen kalibrasyonu, BlazePose landmark çıkartımı \\
+\midrule
+Cem Baygın & Modül 2 (Kalibrasyon Algoritması) + Modül 4 (GUI \& Plotter) & Sıfırlama algoritması, masaüstü arayüzü, canlı açı-zaman grafiği \\
+\midrule
+Cansu Bulut & Modül 3 (Açı Geometrisi) + Modül 4 (Hata Analitiği) + Modül 5 (Test) & Vektör dot-product ayak bileği açısı, gerçek zamanlı RMSE/MAE motoru, Pytest testleri \\
+\bottomrule
+\end{tabularx}
+
+---
+
+\section{Aşama 0: Bileşen Tedariki ve Donanım Satın Alım Listesi}
+
+Projenin mekanik dizlik üzerinde hatasız çalışması için temin edilecek fiziksel bileşenler:
+
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{p{4.2cm} X p{2.2cm} r}
+\toprule
+\rowcolor{lightgray} Bileşen Adı & Teknik Özellikler / Gerekçe & Temin Yeri & Tahmini Fiyat \\
+\midrule
+ESP32 Geliştirme Kartı (NodeMCU-32S / WROOM-32) & Çift çekirdek 240 MHz, Bluetooth Classic (SPP) ve Wi-Fi, dahili donanımsal PCNT modülleri. & Robotistan / Direnc.net & 350 -- 450 TL \\
+\midrule
+2x Optik Artımlı Döner Enkoder (Incremental Encoder) & 600 PPR (Pulse Per Revolution), faz A ve B kare dalga çıkış (NPN Open Collector / Voltaj çıkışlı, 5--24V). & Direnc.net / Motorobit & 800 -- 1.100 TL \\
+\midrule
+Ortopedik Çift Menteşeli Dizlik (Polycentric Knee Brace) & İki taraflı alüminyum mekanik menteşeli, anatomik diz fleksiyonunu takip eden medikal dizlik. & Medikal Market & 450 -- 700 TL \\
+\midrule
+18650 Li-Ion Pil (3.7V 2500--3400mAh) & Kablosuz, taşınabilir ve uzun süreli bağımsız çalışma için şarj edilebilir batarya. & SAMM Market & 150 -- 220 TL \\
+\midrule
+TP4056 Şarj Modülü + Koruma Devresi & Type-C girişli, Li-Ion aşırı şarj ve aşırı deşarj korumalı şarj kartı. & Robotistan & 40 -- 60 TL \\
+\midrule
+MT3608 Step-Up Voltaj Yükseltici & 3.7V pil gerilimini enkoderlerin ve ESP32 VIN hattının ihtiyaç duyduğu kararlı 5V seviyesine çıkarır. & Robotistan & 45 -- 65 TL \\
+\midrule
+Harici 1080p 60FPS Webcam \& Tripod & Sagittal (yan) açıdan yüksek kare hızında hareket takibi için harici geniş açılı kamera. & E-Ticaret & 900 -- 1.400 TL \\
+\midrule
+3D Baskı Parçaları (PLA/PETG) & Enkoder millerini dizlik menteşe eksenine sabitleyen kuplörler ve ESP32 batarya kutusu. & GTU Makerlab & 150 -- 250 TL \\
+\midrule
+Bağlantı Elemanları \& Prototip PCB & 10k$\Omega$ pull-up dirençleri, jumper kablolar, açma-kapama anahtarı, delikli plaket. & Direnc.net & 100 -- 180 TL \\
+\midrule
+\textbf{Toplam Tahmini Bütçe} & \multicolumn{3}{r}{\textbf{2.985 -- 4.425 TL}} \\
+\bottomrule
+\end{tabularx}
+
+---
+
+\section{Aşama 1: Geliştirici Bilgisayarı Kurulum Rehberi (Sıfırdan Başlangıç)}
+
+Takımdaki 4 kişinin de bilgisayarında birebir aynı ortamın kurulu olması gerekmektedir:
+
+\subsection{1. Git ve GitHub CLI Yapılandırması}
+\begin{lstlisting}[language=bash]
+# 1. Git yukleyin ve kimliginizi tanitin
+git config --global user.name "Adiniz Soyadiniz"
+git config --global user.email "ogrenci-numaraniz@gtu.edu.tr"
+
+# 2. GitHub CLI (gh) ile oturum acin
+gh auth login
+# Browser secenegini secip GitHub hesabinizla onaylayin.
+
+# 3. Repoyu yerel bilgisayariniza klonlayin
+git clone https://github.com/eyyoibo/CSE396-Group11-Knee-Goniometer.git
+cd CSE396-Group11-Knee-Goniometer
+\end{lstlisting}
+
+\subsection{2. Python Sanal Ortamı ve Paketlerin Kurulumu}
+\begin{lstlisting}[language=bash]
+# Python 3.10 veya 3.11 sanal ortami olusturun
+python -m venv venv
+
+# Sanal ortami aktif edin (Windows PowerShell):
+.\venv\Scripts\Activate.ps1
+# (Linux / macOS):
+source venv/bin/activate
+
+# Gerekli tum kutuphaneleri yukleyin
+pip install --upgrade pip
+pip install -r requirements.txt
+\end{lstlisting}
+
+\subsection{3. ESP32 Geliştirme Ortamı}
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Arduino IDE 2.x Kurulumu:} \texttt{Preferences} $\rightarrow$ \texttt{Additional boards manager URLs} kısmına Espressif paket linki eklenmeli:\\
+    \url{https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json}
+    \item \textbf{Boards Manager:} \texttt{esp32 by Espressif Systems} paketini kurun.
+    \item \textbf{Kart Seçimi:} \texttt{ESP32 Dev Module}.
+\end{itemize}
+
+---
+
+\section{Aşama 2: Sistem Mimarisi ve Kod Fonksiyon Haritası}
+
+Repodaki modüller ve barındırdıkları fonksiyonların matematiksel işlevleri:
+
+\subsection{1. \texttt{firmware\_esp32/esp32\_encoder.ino} (Modül 1)}
+\begin{itemize}[leftmargin=1.5em]
+    \item \texttt{isr\_encoder1()} / \texttt{isr\_encoder2()}: Döner enkoder Faz A pininin yükselen kenarında donanım kesmesiyle (ISR) tetiklenir; Faz B seviyesine göre yön tespit edip pulse sayacını atomik olarak günceller.
+    \item \texttt{setup()}: 115200 baud Serial ve Bluetooth SPP başlatır (\texttt{KneeGoniometer\_Group11}). Pinleri \texttt{INPUT\_PULLUP} olarak ayarlar.
+    \item \texttt{loop()}: Bluetooth üzerinden gelen \texttt{'Z'} karakterini dinleyerek sıfır referans kalibrasyonu yapar. Her 20 ms'de bir (50 Hz) zaman damgası, palsler ve hesaplanan açıyı CSV formatında yayınlar:\\
+    $\text{Paket Formatı:} \quad \texttt{timestamp\_ms, n1, n2, knee\_angle}$
+\end{itemize}
+
+\subsection{2. \texttt{src/kinematics.py} (Modül 2)}
+\begin{itemize}[leftmargin=1.5em]
+    \item \texttt{calculate\_encoder\_angle(pulses, ppr=600)}: Tek enkoder palsini dereceye çevirir:
+    $$\theta = \left(\frac{\Delta N}{\text{PPR}}\right) \times 360^\circ$$
+    \item \texttt{calculate\_dual\_encoder\_angle(delta\_n1, delta\_n2, k1, k2, theta\_0)}: Çift menteşeli polisentrik eklemin kinematik süperpozisyon açısını hesaplar:
+    $$\theta_{\text{knee, enc}}(t) = \theta_0 + k_1 \Delta N_1(t) + k_2 \Delta N_2(t)$$
+    \item \texttt{calculate\_rmse(angles\_enc, angles\_cam)}: Kök Ortalama Kare Hatası ($\text{RMSE}$):
+    $$\text{RMSE} = \sqrt{\frac{1}{N} \sum_{i=1}^{N} \left(\theta_{\text{enc}, i} - \theta_{\text{cam}, i}\right)^2}$$
+    \item \texttt{calculate\_mae(angles\_enc, angles\_cam)}: Ortalama Mutlak Hata ($\text{MAE}$):
+    $$\text{MAE} = \frac{1}{N} \sum_{i=1}^{N} |\theta_{\text{enc}, i} - \theta_{\text{cam}, i}|$$
+    \item \texttt{generate\_synthetic\_telemetry(num\_samples, max\_angle, ppr)}: Donanım bağlı olmadan simülasyon ve test yapılabilmesi için sinüzoidal sentetik telemetri üretir.
+\end{itemize}
+
+\subsection{3. \texttt{src/vision\_tracker.py} (Modül 3)}
+\begin{itemize}[leftmargin=1.5em]
+    \item \texttt{calculate\_vector\_angle(v1, v2)}: İki 2D vektör arasındaki iç açıyı sayısal clamping ($[-1.0, 1.0]$) korumasıyla hesaplar:
+    $$\theta = \arccos\left(\frac{\vec{v}_1 \cdot \vec{v}_2}{\|\vec{v}_1\| \, \|\vec{v}_2\|}\right) \times \frac{180^\circ}{\pi}$$
+    \item \texttt{calculate\_knee\_angle(hip, knee, ankle)}: Sagittal kalça ($\vec{u} = P_{\text{hip}} - P_{\text{knee}}$) ve baldır ($\vec{v} = P_{\text{ankle}} - P_{\text{knee}}$) vektörlerinden optik diz fleksiyon açısını ($\theta_{\text{knee, cam}}$) bulur.
+    \item \texttt{calculate\_ankle\_angle(knee, ankle, foot)}: Baldır ters vektörü ($-\vec{v} = P_{\text{knee}} - P_{\text{ankle}}$) ve ayak vektörü ($\vec{w} = P_{\text{foot}} - P_{\text{ankle}}$) ile ayak bileği açısını ($\theta_{\text{ankle, cam}}$) hesaplar.
+\end{itemize}
+
+\subsection{4. \texttt{src/gui\_app.py} (Modül 4)}
+\begin{itemize}[leftmargin=1.5em]
+    \item \texttt{GoniometerDashboard}: Kayan pencere (sliding window) halka tamponu (ring buffer) yönetir. Bluetooth telemetrisi ile kamera karelerini zaman damgasına göre eşler.
+    \item \texttt{calibrate\_zero(reference\_angle=0.0)}: Tek tıkla başlangıç ofsetini sıfırlar.
+    \item \texttt{get\_realtime\_metrics()}: Anlık RMSE ve MAE değerlerini arayüze döndürür.
+    \item \texttt{export\_csv(filepath)}: Senkronize açı verilerini bilimsel analiz için CSV formatında kaydeder.
+\end{itemize}
+
+\subsection{5. \texttt{tests/test\_angles.py} (Modül 5)}
+\begin{itemize}[leftmargin=1.5em]
+    \item 12 kapsamlı birim testi: Sıfır açısı, 90 derece çeyrek tur, 360 derece tam tur, süperpozisyon formülü, dik ve paralel vektörler, diz ve ayak bileği geometrileri, sıfır bölme korumaları ve halka tampon kalibrasyonu.
+\end{itemize}
+
+---
+
+\section{Aşama 3: Claude Code, Skill'ler ve MCP Entegrasyon Ekosistemi}
+
+Ekip olarak geliştirme yaparken kullanacağınız yapay zeka araçları ve Model Context Protocol (MCP) yapılandırması:
+
+\subsection{1. Claude Code Eklentileri ve Gelişmiş Skill'ler}
+
+\begin{itemize}[leftmargin=1.5em, itemsep=0.4em]
+    \item \textbf{\texttt{superpowers}:} Claude Code'a terminal komutlarını bağımsız yönetme, testleri otomatik çalıştırma, dosyalar arası cerrahi refactoring ve hata ayıklama refleksleri kazandırır.
+    \item \textbf{\texttt{graphify}:} Projedeki tüm Python ve C++ dosyaları arasındaki çağrı hiyerarşisini, import bağımlılıklarını interaktif bilgi grafiği (knowledge graph) olarak görselleştirir.
+    \item \textbf{\texttt{caveman}:} Token tüketimini optimize eden, dolaysız ve hızlı kod üretim modudur. Büyük fonksiyon refactor ederken gereksiz açıklamaları keser.
+    \item \textbf{\texttt{claude-mem}:} Oturumlar arası kalıcı bellek eklentisidir. ESP32 pin numaralarını, 600 PPR kalibrasyon katsayısını ve hocanın kurallarını her oturumda hatırlamasını sağlar.
+    \item \textbf{\texttt{ponytail}:} Git branch ve PR süreçlerini otomatikleştiren skill'dir. Kod bittiğinde tek komutla feature branch açar, commit atar ve PR hazırlar.
+    \item \textbf{\texttt{rea}:} Tersine mühendislik ve statik kod analiz skill'idir. C++ donanım kodlarının ve MediaPipe işleme hatlarının hız darboğazlarını inceler.
+    \item \textbf{\texttt{karpathy-skills}:} Andrej Karpathy'nin felsefesini taşıyan, sıfır gereksiz soyutlama ile doğrudan çalışan yalın, minimal ve sağlam Python kod şablonları üretir.
+\end{itemize}
+
+\subsection{2. Projede Kullanılacak Kritik MCP (Model Context Protocol) Sunucuları}
+
+\begin{itemize}[leftmargin=1.5em, itemsep=0.4em]
+    \item \textbf{\texttt{figma mcp}:} Masaüstü arayüzü (GUI) için Figma üzerinde hazırlanan tasarım bileşenlerini, buton koordinatlarını ve renk paletlerini doğrudan Python PyQt/PySide koduna dönüştürmek için kullanılır.
+    \item \textbf{\texttt{playwright mcp}:} GUI arayüzünün otomatik ekran görüntülerini alıp görsel regresyon testleri yürütmek ve rapor dokümanına otomatik resim eklemek için kullanılır.
+    \item \textbf{\texttt{github mcp}:} Claude içinden doğrudan Issue durumlarını güncellemek, takım arkadaşlarına PR inceleme yorumları bırakmak ve Actions yeşil tikini denetlemek için kullanılır.
+    \item \textbf{\texttt{sequential-thinking mcp}:} Çift enkoder kalibrasyon matrisleri, Kalman filtre katsayıları ve zaman serisi interpolasyon hesapları yapılırken adım adım matematiksel akıl yürütme sağlar.
+\end{itemize}
+
+\subsection{3. Proje Kök Dizini \texttt{CLAUDE.md} Konfigürasyonu}
+Tüm takım üyelerinin Claude Code'u projenin standartlarına uygun çalıştırması için deponun kök dizininde bulunması gereken kılavuz:
+\begin{lstlisting}[language=bash]
+# CLAUDE.md Kurallari
+- Kodlama Dili: Python 3.10+ ve ESP32 C++ (Arduino Core)
+- Test Kosulu: Her degisiklikten sonra 'pytest tests/' calistirilmali
+- Linter: 'flake8 . --count --select=E9,F63,F7,F82' hatasiz olmali
+- Git Kurali: Asla main branch'e commit atma, daima feature/<modul> kullan
+- Matematik: Tum acilar derece (degree) cinsinden olmali
+\end{lstlisting}
+
+---
+
+\section{Aşama 4: Altın Çalışma Döngüsü ve GitHub Kuralları}
+
+Takımın kod çakışması (merge conflict) yaşamadan, hocanın her an inceleyebileceği temiz bir repoya sahip olması için uygulanacak 5 adımlı döngü:
+
+\begin{center}
+\textbf{Issue Seç} $\longrightarrow$ \textbf{Feature Branch Aç} $\longrightarrow$ \textbf{Kodu Yaz \& Pytest Çalıştır} $\longrightarrow$ \textbf{PR Aç} $\longrightarrow$ \textbf{Actions Yeşil Tik $\rightarrow$ Merge}
+\end{center}
+
+\subsection{Adım Adım Uygulama:}
+\begin{enumerate}[leftmargin=1.8em, itemsep=0.4em]
+    \item \textbf{Issue Belirleme:} GitHub'daki 5 aktif modül Issue'sundan üzerinde çalışacağınız görevi seçin ve altına başladığınızı belirten yorum yazın.
+    \item \textbf{Dal Açma:}
+    \begin{lstlisting}[language=bash]
+    git checkout main
+    git pull origin main
+    git checkout -b feature/modul-adi
+    \end{lstlisting}
+    \item \textbf{Geliştirme ve Test:} Kodu yazın. Değişikliklerin testleri bozmadığını doğrulamak için:
+    \begin{lstlisting}[language=bash]
+    pytest tests/ -v
+    \end{lstlisting}
+    \item \textbf{Commit ve Push:}
+    \begin{lstlisting}[language=bash]
+    git add .
+    git commit -m "feat(modul): yapilan degisikligin aciklamasi"
+    git push origin feature/modul-adi
+    \end{lstlisting}
+    \item \textbf{Pull Request (PR) ve Onay:} GitHub'da PR açın. GitHub Actions sanal makinesi otomatik çalışıp kodun sözdizimini ve testlerini doğrular. \textbf{Yeşil Tik ($\checkmark$)} yandığında bir takım arkadaşınız inceleyip onay verir ve PR \texttt{main} ile birleştirilir.
+\end{enumerate}
+
+---
+
+\section{Aşama 5: 12 Haftalık Ayrıntılı Takvim ve Kilometre Taşları}
+
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{p{2.2cm} X p{3.5cm}}
+\toprule
+\rowcolor{lightgray} Hafta & Yapılacak İşler ve Teknik Hedefler & Çıktı / Kilometre Taşı \\
+\midrule
+Hafta 1--2 & Tüm fiziksel bileşenlerin siparişi. GTU Makerlab'de enkoder kuplörlerinin 3D basımı. Takım bilgisayarlarında Python, Git ve ESP32 ortam kurulumları. & Donanım tedarik tamamlandı. Ortamlar hazır. \\
+\midrule
+Hafta 3--4 & ESP32 donanım kesmesi (PCNT/ISR) ile çift enkoder okuma kodlarının yazımı. Bluetooth SPP telemetri protokolünün test edilmesi. & 50 Hz stabil kablosuz telemetri akışı sağlandı. \\
+\midrule
+Hafta 5--6 & MediaPipe Pose entegrasyonu. Sagittal düzlemden kalça, diz, ayak bileği landmark çıkartımı ve açı hesaplama hattı. & 30 FPS kamera açı takibi çalışır hale geldi. \\
+\midrule
+Hafta 7--8 & Python masaüstü GUI arayüzünün geliştirilmesi. Bluetooth telemetrisi ile kamera karelerinin zaman damgasına göre eşlenmesi (Ring Buffer). & Eşzamanlı canlı grafik ve anlık RMSE/MAE gösterimi. \\
+\midrule
+Hafta 9--10 & Ortopedik dizliğin mekanik montajı. Sağlıklı denekler üzerinde çömelme (squat) ve bacak uzatma (leg extension) egzersiz testleri. & Karşılaştırmalı deneysel veri setleri toplandı. \\
+\midrule
+Hafta 11--12 & Veri analizi, hata dağılım grafikleri, final proje raporu ve Prof. Dr. Erkan Zergeroğlu'na sunum/savunma provası. & CSE 396 Başarılı Proje Teslimi. \\
+\bottomrule
+\end{tabularx}
+
+---
+
+\section{Erkan Hoca \& Jüri Savunma Kontrol Listesi}
+
+Projenin başarıyla onaylanması için jüri önünde sağlanması gereken kesin kriterler:
+\begin{itemize}[leftmargin=1.5em, itemsep=0.3em]
+    \item[$\square$] \textbf{Tamamen Kablosuz Çalışma:} ESP32 batarya üzerinden çalışmalı, bilgisayara hiçbir kablo bağlı olmadan Bluetooth üzerinden en az 30--50 Hz hızında veri akıtmalı.
+    \item[$\square$] \textbf{Görüntü İşleme Hızı:} MediaPipe tabanlı optik sistem 25--30 FPS altına düşmeden diz ve ayak bileği açılarını hesaplamalı.
+    \item[$\square$] \textbf{Eşzamanlı Karşılaştırma:} GUI arayüzünde enkoder eğrisi ile kamera eğrisi aynı koordinat sisteminde canlı çizilmeli, anlık MAE/RMSE metrikleri gösterilmeli.
+    \item[$\square$] \textbf{Hızlı Kalibrasyon:} Tek tuşla veya komutla referans duruşunda 5 saniyeden kısa sürede sıfırlama yapılabilmeli.
+    \item[$\square$] \textbf{GitHub Actions Yeşil Tik:} Deponun üstündeki tüm testler yeşil tikli olmalı, hiçbir modül doğrudan \texttt{main}'e test edilmeden atılmamış olmalı.
+\end{itemize}
+
+\end{document}
