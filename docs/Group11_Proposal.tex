@@ -1,0 +1,174 @@
+\documentclass[11pt, a4paper]{article}
+
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\renewcommand{\familydefault}{\sfdefault} % Clean, modern sans-serif typography
+
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage[table]{xcolor}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{accentblue}{RGB}{25, 84, 156}
+\definecolor{lightgray}{RGB}{245, 247, 250}
+
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\begin{center}
+    {\LARGE \textbf{\textcolor{accentblue}{CSE 396 Computer Engineering Project Proposal}}}\\[0.4em]
+    {\large \textbf{Wireless Wearable Dual-Encoder Knee Goniometer and Vision-Based Lower-Limb Kinematics Analyzer}}
+\end{center}
+\vspace{0.5em}
+\hrule
+\vspace{1em}
+
+\section{General Project Information}
+
+\begin{itemize}[leftmargin=1.5em, itemsep=0.25em]
+    \item \textbf{Group Name:} Group 11
+    \item \textbf{Group Members:} İbrahim Halil Doğan, Mert Canoğlu, Cem Baygın, Cansu Bulut
+    \item \textbf{Project Name:} Wireless Wearable Dual-Encoder Knee Goniometer and Vision-Based Lower-Limb Kinematics Analyzer
+    \item \textbf{Advisor Name:} Prof. Dr. Erkan Zergeroğlu
+    \item \textbf{University:} Gebze Technical University -- Department of Computer Engineering
+    \item \textbf{GitHub Repository:} \texttt{https://github.com/eyyoibo/CSE396-Group11-Knee-Goniometer}
+\end{itemize}
+
+\subsection*{Summary}
+A wearable mechanical knee brace equipped with two rotary encoders is used to measure the knee joint flexion and extension angles of athletes during physical movement. Previously tethered to a PC via physical cables and limited strictly to the knee joint, the hardware is upgraded in this project into a fully untethered, battery-powered wireless system using an ESP32 microcontroller. Simultaneously, an external camera-based computer vision pipeline (utilizing OpenCV and Google MediaPipe Pose) tracks lower-limb anatomical landmarks in real time. The vision system provides a second independent measurement of the knee angle for cross-validation and additionally computes the ankle joint angle, overcoming the wearable hardware's lack of an ankle sensor. A desktop application receives wireless telemetry from the ESP32 alongside the live camera stream, renders skeletal overlays, plots real-time comparative Angle-vs-Time graphs for both measurement methods, and calculates real-time error metrics (RMSE and Mean Absolute Error).
+
+\textbf{Keywords:} Wearable goniometer, dual rotary encoder, knee kinematics, ankle angle estimation, ESP32 wireless telemetry, computer vision, MediaPipe Pose, sensor cross-validation.
+
+\section{Purpose and Goals}
+Accurate measurement of lower-limb joint Range of Motion (ROM) is critical in sports biomechanics, athlete performance monitoring, and injury rehabilitation. Traditional laboratory optical motion capture systems are expensive and restricted to controlled rooms, whereas purely mechanical wired goniometers restrict an athlete's natural movement. Our primary purpose in this project is to modernize an existing dual-encoder wearable knee goniometer by making it completely wireless via an ESP32 microcontroller, while simultaneously developing a markerless computer vision tracking system to compare electromechanical sensor accuracy against optical pose estimation and expand tracking coverage to the ankle joint.
+
+\subsection{Problem}
+Tracking dynamic lower-limb joint kinematics in athletes using both wearable sensors and external cameras introduces two distinct engineering challenges:
+
+\textbf{The Wireless Hardware \& Multi-Joint Limitation Phase:} The existing wearable goniometer relies on two rotary encoders to accommodate the polycentric (moving axis) biomechanics of the human knee. However, being wired to a PC prevents athletes from performing natural exercises (running, squatting, jumping). Converting this hardware into a standalone ESP32-based wireless node requires high-frequency hardware interrupt handling so encoder pulses are never dropped during rapid leg flexion, alongside portable battery regulation. Furthermore, the mechanical brace cannot physically measure the ankle joint, requiring a non-invasive secondary modality to capture ankle dorsiflexion and plantarflexion.
+
+\textbf{The Synchronization \& Cross-Modal Verification Phase:} To scientifically compare the wearable dual-encoder readings against the external camera's pose estimation, two asynchronous data streams must be aligned in real time. The ESP32 streams high-frequency serial telemetry over Bluetooth/Wi-Fi (50--100 Hz), whereas the computer vision pipeline processes RGB frames at camera frame rates (30--60 FPS). The system must synchronize these streams, compute 2D vector angles across the hip, knee, ankle, and foot landmarks, and evaluate the discrepancy between mechanical and optical tracking under real athletic motion.
+
+\subsection{Solution Methods}
+
+\subsubsection{Wireless Dual-Rotary Encoder Goniometer Approach (Embedded Hardware)}
+The embedded solution utilizes an ESP32 microcontroller connected to two incremental rotary encoders mounted on a polycentric knee brace. Using the ESP32's dedicated hardware Pulse Counter (PCNT) modules and external interrupts, quadrature phase signals ($A$ and $B$ channels) from both encoders are decoded without CPU polling overhead. The firmware applies a kinematic transformation combining both encoder displacements ($\Delta\theta_1$ and $\Delta\theta_2$) relative to a calibrated zero-extension baseline:
+\[
+\theta_{\text{knee, enc}}(t) = \theta_0 + k_1 \Delta N_1(t) + k_2 \Delta N_2(t)
+\]
+where $\Delta N_1, \Delta N_2$ are the net pulse counts and $k_1, k_2$ are angular calibration constants derived from the encoder resolution (PPR). The calculated angle and timestamp are transmitted wirelessly via Bluetooth Serial (SPP) or Wi-Fi UDP to the host PC.
+
+\subsubsection{Computer Vision \& Markerless Pose Estimation Approach (Optical Tracking)}
+The optical solution captures live video of the athlete from a sagittal (side) view using an external camera and processes each frame with OpenCV and Google MediaPipe Pose. The neural network extracts normalized 2D/3D coordinates for key lower-limb landmarks: Hip ($P_{\text{hip}}$), Knee ($P_{\text{knee}}$), Ankle ($P_{\text{ankle}}$), and Foot Index ($P_{\text{foot}}$). Using vector algebra, limb segment vectors are constructed:
+\[
+\vec{u} = P_{\text{hip}} - P_{\text{knee}}, \quad \vec{v} = P_{\text{ankle}} - P_{\text{knee}}, \quad \vec{w} = P_{\text{foot}} - P_{\text{ankle}}
+\]
+The vision-based knee flexion angle $\theta_{\text{knee, cam}}$ and ankle angle $\theta_{\text{ankle, cam}}$ are computed via the dot product formulation:
+\[
+\theta_{\text{knee, cam}} = \arccos\left(\frac{\vec{u} \cdot \vec{v}}{\|\vec{u}\| \, \|\vec{v}\|}\right) \cdot \frac{180^\circ}{\pi}, \quad
+\theta_{\text{ankle, cam}} = \arccos\left(\frac{-\vec{v} \cdot \vec{w}}{\|\vec{v}\| \, \|\vec{w}\|}\right) \cdot \frac{180^\circ}{\pi}
+\]
+This approach provides a completely non-contact knee measurement for comparison against the encoders while fulfilling the ankle tracking requirement.
+
+\section{Project Management}
+
+\subsection{Modules}
+
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{3.6cm} X >{\raggedright\arraybackslash}p{3.6cm}}
+\toprule
+\rowcolor{lightgray} \textbf{Module} & \textbf{Individual Works (Standalone Deliverable)} & \textbf{Students} \\
+\midrule
+Mechanical \& Wireless ESP32 Hardware & Interfacing the 2 rotary encoders with ESP32 GPIO/PCNT pins, assembling the Li-ion battery power circuit, and streaming raw pulse counts wirelessly over Bluetooth Serial to a terminal. & İbrahim Halil Doğan, Mert Canoğlu \\
+\midrule
+Dual-Encoder Kinematics \& Calibration & Implementing firmware/software routines to convert dual-encoder pulse counts into calibrated knee flexion degrees, including a zero-position reset command and synthetic pulse generator for testing. & İbrahim Halil Doğan, Cem Baygın \\
+\midrule
+Computer Vision Knee \& Ankle Analyzer & Developing the OpenCV and MediaPipe Pose pipeline to detect hip, knee, ankle, and foot landmarks, draw visual skeletal overlays with angle arcs on video frames, and calculate knee and ankle angles. & Mert Canoğlu, Cansu Bulut \\
+\midrule
+GUI Control Panel \& Real-Time 2D Plotter & Building the Python desktop dashboard that displays the live annotated camera feed, plots synchronized real-time Angle-vs-Time curves (Encoder vs. Camera), and displays instant RMSE/MAE difference metrics. & Cem Baygın, Cansu Bulut \\
+\midrule
+Integration, CI/CD \& Testing & Writing standalone unit test suites (\texttt{pytest}) for angle math, configuring GitHub Actions automated workflows, and conducting comparative accuracy experiments on athlete movements. & İbrahim Halil Doğan, Cansu Bulut \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Simplified System Design}
+
+\begin{center}
+\setlength{\tabcolsep}{8pt}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{|c|c|c|}
+\hline
+\rowcolor{lightgray} \textbf{Wearable Hardware Layer} & \textbf{Optical Vision Layer} & \textbf{Host PC Application (GUI)} \\
+\hline
+Dual Rotary Encoders (Knee) & External USB/IP Camera & Live Skeletal Video Overlay \\
+$\downarrow$ \textit{(Quadrature Signals)} & $\downarrow$ \textit{(RGB Video Stream)} & $\updownarrow$ \textit{(Time Alignment)} \\
+ESP32 Microcontroller & OpenCV + MediaPipe Pose & Real-Time 2D Angle-Time Plot \\
+$\downarrow$ \textit{(Bluetooth Telemetry)} & $\downarrow$ \textit{(Knee \& Ankle Vectors)} & $\downarrow$ \textit{(Error Analytics)} \\
+Wireless Knee Angle ($\theta_{\text{enc}}$) & Optical Angles ($\theta_{\text{cam}}, \theta_{\text{ankle}}$) & Comparative RMSE \& CSV Log \\
+\hline
+\end{tabular}
+\end{center}
+
+The system architecture consists of two parallel data acquisition pipelines converging into a unified PC Graphical User Interface (GUI). On the wearable side, the ESP32 reads both rotary encoders attached to the knee brace, calculates the mechanical knee angle, and transmits packets wirelessly over Bluetooth Serial. Simultaneously, the optical pipeline captures the athlete via an external camera, extracts lower-limb keypoints using MediaPipe, and computes both the knee angle and the ankle angle. The GUI synchronizes both incoming readings by timestamp, renders the visual skeletal lines (Hip--Knee--Ankle--Foot) on screen, plots real-time 2D Angle-vs-Time graphs for both methods side by side, and allows the user to calibrate sensors and export comparative datasets.
+
+\subsection{Risk Management}
+
+\begin{itemize}[leftmargin=1.5em, itemsep=0.5em]
+    \item \textbf{Risk 1: Mechanical Slippage of the Wearable Brace During Athletic Motion}\\
+    \textbf{Impact:} The brace shifts on the athlete's leg during rapid flexion, causing rotary encoder centers to drift from the anatomical knee joint and introducing systematic measurement offsets.\\
+    \textbf{Mitigation:} Use adjustable high-grip elastic Velcro straps and include a one-click software ``Calibrate Zero'' button in the GUI to re-zero the encoders before each exercise set.
+
+    \item \textbf{Risk 2: Optical Occlusion and Camera Perspective Error}\\
+    \textbf{Impact:} If the athlete rotates away from the camera's perpendicular plane or if the wearable brace obscures the knee contour, MediaPipe landmark confidence drops, producing noisy vision angles.\\
+    \textbf{Mitigation:} Apply a real-time moving average / Kalman filter to landmark coordinates, enforce a sagittal camera alignment guide during calibration, and use high-contrast markers if needed.
+
+    \item \textbf{Risk 3: Wireless Telemetry Latency and Stream Desynchronization}\\
+    \textbf{Impact:} Delay between Bluetooth packets and camera frame capture causes phase shifts on the Angle-vs-Time graph, inflating the calculated difference between encoder and camera angles.\\
+    \textbf{Mitigation:} Read ESP32 serial data in a dedicated background thread using ring buffers, timestamp all packets upon arrival, and interpolate encoder samples to match exact camera frame timestamps.
+\end{itemize}
+
+\subsection{Estimated Budget}
+
+\begin{table}[h!]
+\centering
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{0.75\textwidth}{X r}
+\toprule
+\rowcolor{lightgray} \textbf{Component} & \textbf{Estimated Cost (TRY)} \\
+\midrule
+ESP32 Development Board (Wi-Fi \& Bluetooth Dual-Mode) & 300 -- 500 \\
+Dual Rotary Encoders \& Mechanical Brace Maintenance & 700 -- 1,100 \\
+External 1080p 60FPS Webcam \& Tripod Mount & 900 -- 1,500 \\
+Li-Ion Battery (18650), TP4056 Charger \& Voltage Booster & 350 -- 550 \\
+Wearable Velcro Straps \& 3D Printed Electronics Enclosure & 400 -- 650 \\
+Misc. Electronics (Jumper Wires, Prototype PCB, Connectors) & 200 -- 350 \\
+\midrule
+\textbf{Total Estimated Budget} & \textbf{2,850 -- 4,650 TRY} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Success Criteria}
+\begin{itemize}[leftmargin=1.5em, itemsep=0.35em]
+    \item The wearable hardware must operate completely wirelessly via the ESP32 on battery power and stream real-time dual-encoder knee angle data to the PC at a minimum rate of 30 Hz.
+    \item The computer vision module must simultaneously track and display both the knee joint angle and the ankle joint angle in real time at a minimum of 25--30 FPS.
+    \item The GUI must plot live Angle-vs-Time curves for both the rotary encoder system and the camera vision system on the same coordinate axes and display real-time discrepancy metrics (MAE/RMSE).
+    \item A calibration routine must allow the user to align both systems at a known reference posture within less than 5 seconds.
+    \item All software modules must include standalone unit tests and pass automated syntax and unit checks via GitHub Actions.
+\end{itemize}
+
+\section{References}
+\begin{enumerate}[leftmargin=1.8em, itemsep=0.35em]
+    \item {[1]} V. Lugade, E. Fortune, M. Morrow, and K. Kaufman (2014), ``Validity of using tri-axial accelerometers and wearable goniometers to measure human movement,'' \textit{Medical Engineering \& Physics}, vol. 36, no. 2, pp. 169--176.
+    \item {[2]} V. Bazarevsky, I. Grishchenko, K. Raveendran, T. Zhu, F. Zhang, and M. Grundmann (2020), ``BlazePose: On-device Real-time Body Pose tracking,'' \textit{arXiv preprint arXiv:2006.10204} (Google MediaPipe Pose).
+    \item {[3]} S.al-Amri et al. (2018), ``Clinical validation of a polycentric wearable rotary encoder goniometer for knee flexion assessment during dynamic sports rehabilitation,'' \textit{Journal of Biomechanics}, vol. 71, pp. 112--119.
+\end{enumerate}
+
+\end{document}
