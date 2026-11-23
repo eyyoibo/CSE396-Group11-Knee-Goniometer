@@ -71,18 +71,28 @@ def main():
     issue_files = sorted(list(issues_dir.glob("issue_*.md")))
     print(f"Toplam {len(issue_files)} adet issue dosyasi bulundu.\n")
 
+    # Zaten olusturulanlar: issue_01, issue_02, issue_03, issue_04
+    already_created = ["issue_01_pcnt_driver.md", "issue_02_differential_receiver.md", "issue_03_bluetooth_spp.md", "issue_04_angle_calculation_fw.md"]
+
     for file_path in issue_files:
+        if file_path.name in already_created:
+            continue
+
         issue_data = parse_issue_file(file_path)
         if not issue_data:
             print(f"[ATLANDI] {file_path.name} ayrıştırılamadı.")
             continue
 
+        # Eksik etiketleri repo uzerinde olustur
+        for lbl in issue_data["labels"]:
+            if not args.dry_run:
+                subprocess.run(["gh", "label", "create", lbl, "--repo", args.repo or "eyyoibo/CSE396-Group11-Knee-Goniometer", "--force"], capture_output=True)
+
         cmd = ["gh", "issue", "create", "--title", issue_data["title"], "--body", issue_data["body"]]
         
         if issue_data["labels"]:
-            cmd.extend(["--label", ",".join(issue_data["labels"])])
-        if issue_data["milestone"]:
-            cmd.extend(["--milestone", issue_data["milestone"]])
+            for lbl in issue_data["labels"]:
+                cmd.extend(["--label", lbl])
         if args.repo:
             cmd.extend(["--repo", args.repo])
 
