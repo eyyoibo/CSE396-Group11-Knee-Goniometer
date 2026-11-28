@@ -36,7 +36,6 @@
     \item \textbf{Group Name:} Group 11
     \item \textbf{Group Members:} İbrahim Halil Doğan, Mert Canoğlu, Cem Baygın, Cansu Bulut
     \item \textbf{Project Name:} Wireless Wearable Dual-Encoder Knee Goniometer and Vision-Based Lower-Limb Kinematics Analyzer
-    \item \textbf{Advisor Name:} Prof. Dr. Erkan Zergeroğlu
     \item \textbf{University:} Gebze Technical University -- Department of Computer Engineering
     \item \textbf{GitHub Repository:} \texttt{https://github.com/eyyoibo/CSE396-Group11-Knee-Goniometer}
 \end{itemize}
@@ -86,15 +85,13 @@ This approach provides a completely non-contact knee measurement for comparison 
 \toprule
 \rowcolor{lightgray} \textbf{Module} & \textbf{Individual Works (Standalone Deliverable)} & \textbf{Students} \\
 \midrule
-Mechanical \& Wireless ESP32 Hardware & Interfacing the 2 rotary encoders with ESP32 GPIO/PCNT pins, assembling the Li-ion battery power circuit, and streaming raw pulse counts wirelessly over Bluetooth Serial to a terminal. & İbrahim Halil Doğan, Mert Canoğlu \\
+Module 1: Hardware \& Encoder Signal Processing & Interfacing 2 rotary encoders with ESP32 PCNT hardware pulse counter pins, Li-ion power circuit, real-time kinematics angle calculation, and streaming 28-byte binary telemetry over Bluetooth Serial. & İbrahim Halil Doğan, Mert Canoğlu \\
 \midrule
-Dual-Encoder Kinematics \& Calibration & Implementing firmware/software routines to convert dual-encoder pulse counts into calibrated knee flexion degrees, including a zero-position reset command and synthetic pulse generator for testing. & İbrahim Halil Doğan, Cem Baygın \\
+Module 2: Interface \& RMSE Discrepancy Analysis & Building the PyQt6 desktop interface, Bluetooth receiver thread, real-time plotting (pyqtgraph), 5-second sliding window RMSE/MAE calculation, Bland-Altman agreement analysis, and CSV logging. & Cem Baygın, Cansu Bulut \\
 \midrule
-Computer Vision Knee \& Ankle Analyzer & Developing the OpenCV and MediaPipe Pose pipeline to detect hip, knee, ankle, and foot landmarks, draw visual skeletal overlays with angle arcs on video frames, and calculate knee and ankle angles. & Mert Canoğlu, Cansu Bulut \\
+Module 3: Simulation \& MediaPipe Angle Calculation & OpenCV 1080p camera capture, MediaPipe Pose tracking (hip, knee, ankle, foot), 2D vector angle math, low-pass filtering, 2D skeletal simulation overlay, and hardware timestamp interpolation. & Mert Canoğlu, Cansu Bulut \\
 \midrule
-GUI Control Panel \& Real-Time 2D Plotter & Building the Python desktop dashboard that displays the live annotated camera feed, plots synchronized real-time Angle-vs-Time curves (Encoder vs. Camera), and displays instant RMSE/MAE difference metrics. & Cem Baygın, Cansu Bulut \\
-\midrule
-Integration, CI/CD \& Testing & Writing standalone unit test suites (\texttt{pytest}) for angle math, configuring GitHub Actions automated workflows, and conducting comparative accuracy experiments on athlete movements. & İbrahim Halil Doğan, Cansu Bulut \\
+Module 4: Mobile App Companion & Cross-platform React Native / Expo companion app with Bluetooth Low Energy / SPP connectivity, live dial gauge visualization, and hardware control commands (Zero, Stream, Pause). & İbrahim Halil Doğan, Cem Baygın \\
 \bottomrule
 \end{tabularx}
 

@@ -1,135 +1,89 @@
 """
-Diz Gonyometresi — İstatistiksel Analiz Motoru
+Statistical Discrepancy Engine — RMSE, MAE & Bland-Altman Analytics
 
-Enkoder ve kamera tabanlı açı ölçümleri arasındaki uyumu
-değerlendirmek için kayan pencere RMSE/MAE ve Bland-Altman
-analizi gerçekleştirir.
+Computes sliding-window and cumulative statistical discrepancy metrics
+between rotary encoder angular telemetry and optical pose estimation series.
 
-Proje Ekibi: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin
-Danışman: Prof. Dr. Erkan Zergeroglu
+Project Team: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin, Cansu Bulut
 """
 
-from typing import Tuple
-
+from typing import Tuple, Dict, Any
 import numpy as np
 
 
 class AnalysisEngine:
     """
-    İki ölçüm serisi (enkoder ve kamera) arasındaki istatistiksel
-    karşılaştırma hesaplamalarını yürüten sınıf.
+    Statistical engine for evaluating cross-modal kinematics tracking agreement.
 
-    Kayan pencere boyutu varsayılan olarak 5 saniyedir (250 örnek @ 50 Hz).
+    Default sliding window: 5.0 seconds (250 samples @ 50 Hz).
     """
 
-    def __init__(self, window_seconds: float = 5.0, sample_rate_hz: float = 50.0):
-        """
-        @param window_seconds: Kayan pencere süresi (saniye)
-        @param sample_rate_hz: Örnekleme frekansı (Hz)
-        """
-        self._window_size = int(window_seconds * sample_rate_hz)
+    def __init__(self, window_seconds: float = 5.0, sample_rate_hz: float = 50.0) -> None:
+        self.window_size = int(window_seconds * sample_rate_hz)
+        self.encoder_buffer = []
+        self.camera_buffer = []
 
-        # TODO: Dahili veri tamponlarını (encoder_values, camera_values) burada tanımlayın
-
-    # ----------------------------------------------------------------
-    # compute_sliding_rmse
-    # ----------------------------------------------------------------
     def compute_sliding_rmse(self, encoder_values: np.ndarray,
                              camera_values: np.ndarray) -> float:
         """
-        Son 'window_size' örnek üzerinden RMSE hesaplar.
-
-        RMSE = sqrt( (1/n) * Σ(encoder_i - camera_i)² )
-
-        @param encoder_values: Enkoder açı dizisi (en az window_size uzunlukta)
-        @param camera_values:  Kamera açı dizisi (aynı uzunlukta)
-        @return: RMSE değeri (derece)
+        Calculates Root Mean Square Error (RMSE) across the trailing window:
+            RMSE = sqrt( (1/n) * sum((theta_cam_i - theta_enc_i)^2) )
 
         TODO:
-        - Her iki dizinin son window_size elemanını al
-        - Farkları hesapla
-        - Farkların karelerinin ortalamasının karekökünü döndür
-        - Yetersiz veri varsa NaN döndür
+        - Extract trailing window_size valid samples from arrays
+        - Compute element-wise squared differences
+        - Return square root of mean squared error
         """
-        return float("nan")
+        if len(encoder_values) == 0 or len(camera_values) == 0:
+            return 0.0
+        diff = camera_values[-self.window_size:] - encoder_values[-self.window_size:]
+        return float(np.sqrt(np.mean(diff ** 2)))
 
-    # ----------------------------------------------------------------
-    # compute_sliding_mae
-    # ----------------------------------------------------------------
     def compute_sliding_mae(self, encoder_values: np.ndarray,
                             camera_values: np.ndarray) -> float:
         """
-        Son 'window_size' örnek üzerinden MAE hesaplar.
-
-        MAE = (1/n) * Σ|encoder_i - camera_i|
-
-        @param encoder_values: Enkoder açı dizisi
-        @param camera_values:  Kamera açı dizisi
-        @return: MAE değeri (derece)
+        Calculates Mean Absolute Error (MAE) across the trailing window:
+            MAE = (1/n) * sum(|theta_cam_i - theta_enc_i|)
 
         TODO:
-        - Her iki dizinin son window_size elemanını al
-        - Mutlak farkların ortalamasını döndür
-        - Yetersiz veri varsa NaN döndür
+        - Extract trailing window_size valid samples from arrays
+        - Compute element-wise absolute differences
+        - Return mean of absolute error
         """
-        return float("nan")
+        if len(encoder_values) == 0 or len(camera_values) == 0:
+            return 0.0
+        diff = np.abs(camera_values[-self.window_size:] - encoder_values[-self.window_size:])
+        return float(np.mean(diff))
 
-    # ----------------------------------------------------------------
-    # compute_bland_altman
-    # ----------------------------------------------------------------
-    def compute_bland_altman(
-        self,
-        encoder_values: np.ndarray,
-        camera_values: np.ndarray,
-    ) -> Tuple[np.ndarray, np.ndarray, float, float, float]:
+    def compute_bland_altman(self, encoder_series: np.ndarray,
+                             camera_series: np.ndarray) -> Dict[str, float]:
         """
-        Bland-Altman analizi yapar.
-
-        @param encoder_values: Enkoder açı dizisi (tüm oturum verisi)
-        @param camera_values:  Kamera açı dizisi (aynı uzunlukta)
-        @return: (means, diffs, bias, lower_limit, upper_limit)
-                 means        — iki yöntemin ortalamaları
-                 diffs        — iki yöntem arasındaki farklar
-                 bias         — farkların ortalaması (sistematik hata)
-                 lower_limit  — bias - 1.96*SD
-                 upper_limit  — bias + 1.96*SD
+        Computes Bland-Altman method comparison parameters:
+        - Mean difference (systematic bias, d_bar)
+        - Standard deviation of differences (SD)
+        - Upper 95% limit of agreement (d_bar + 1.96 * SD)
+        - Lower 95% limit of agreement (d_bar - 1.96 * SD)
 
         TODO:
-        - means = (encoder + camera) / 2
-        - diffs = encoder - camera
-        - bias = np.mean(diffs)
-        - sd = np.std(diffs, ddof=1)
-        - lower_limit = bias - 1.96 * sd
-        - upper_limit = bias + 1.96 * sd
-        - Tümünü döndür
+        - Filter out any NaN entries from camera occlusions
+        - Compute pairwise differences D = camera_series - encoder_series
+        - Compute mean bias and standard deviation
+        - Return dictionary containing: bias, sd, upper_loa, lower_loa
         """
-        empty = np.array([])
-        return empty, empty, 0.0, 0.0, 0.0
+        valid_mask = ~np.isnan(camera_series) & ~np.isnan(encoder_series)
+        enc_valid = encoder_series[valid_mask]
+        cam_valid = camera_series[valid_mask]
 
-    # ----------------------------------------------------------------
-    # export_results
-    # ----------------------------------------------------------------
-    def export_results(
-        self,
-        encoder_values: np.ndarray,
-        camera_values: np.ndarray,
-        output_path: str,
-    ) -> None:
-        """
-        Bland-Altman grafiğini ve istatistik özetini dosyaya aktarır.
+        if len(enc_valid) == 0:
+            return {"bias": 0.0, "sd": 0.0, "upper_loa": 0.0, "lower_loa": 0.0}
 
-        @param encoder_values: Enkoder açı dizisi
-        @param camera_values:  Kamera açı dizisi
-        @param output_path:    Çıktı dosya yolu (uzantısız; .png ve .csv eklenir)
+        differences = cam_valid - enc_valid
+        bias = float(np.mean(differences))
+        sd = float(np.std(differences, ddof=1)) if len(differences) > 1 else 0.0
 
-        TODO:
-        - compute_bland_altman ile istatistikleri hesapla
-        - matplotlib ile Bland-Altman grafiği çiz:
-            * Scatter plot: x=means, y=diffs
-            * Yatay çizgiler: bias (kırmızı), lower/upper limit (kesikli mavi)
-            * Eksen etiketleri ve başlık (Türkçe)
-        - Grafiği output_path.png olarak kaydet
-        - İstatistik özetini (bias, SD, uyum sınırları, RMSE, MAE)
-          output_path.csv olarak kaydet
-        """
-        pass
+        return {
+            "bias": bias,
+            "sd": sd,
+            "upper_loa": bias + 1.96 * sd,
+            "lower_loa": bias - 1.96 * sd
+        }

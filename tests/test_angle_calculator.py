@@ -1,74 +1,70 @@
 """
-Aci Hesaplayici (AngleCalculator) Birim Testleri
+Unit Tests for AngleCalculator
 
-MediaPipe landmark koordinatlarindan hesaplanan diz acisinin
-dogru oldugunu, filtrelemenin calistigini ve zaman enterpolasyonunu test eder.
+Tests 2D vector dot-product angle calculations, Butterworth low-pass filtering,
+and temporal sample interpolation.
 """
 
 import pytest
 import numpy as np
 
-# TODO: module3 import edildikten sonra aktif et
-# from module3_mediapipe_simulation.src.angle_calculator import AngleCalculator
-
 
 class TestAngleCalculator:
-    """AngleCalculator sinifi icin test senaryolari."""
+    """Test suite for AngleCalculator class."""
 
     def setup_method(self):
-        """Her test oncesi hesaplayici olustur."""
+        """Initialize calculator instance before each test."""
         # TODO: calculator = AngleCalculator()
         pass
 
     def test_straight_leg_180_degrees(self):
         """
-        Duz bacak pozisyonunda (kalca-diz-ayak bilegi ayni cizgide)
-        sonucun 180 derece oldugunu dogrular.
+        Verify that collinear vertical hip-knee-ankle coordinates yield 180.0 degrees.
 
         TODO:
-            - Kalca (0, 0), diz (0, 1), ayak bilegi (0, 2) noktalarini ver
-            - Hesaplanan acinin 180 dereceye yakin oldugunu kontrol et
+            - Set hip (0, 0), knee (0, 1), ankle (0, 2)
+            - Assert calculated knee angle equals 180.0 +/- 0.1 deg
         """
         pass
 
     def test_right_angle_90_degrees(self):
         """
-        90 derecelik diz bukulmesini dogrular.
+        Verify that perpendicular leg segments yield 90.0 degrees flexion.
 
         TODO:
-            - Kalca (0, 2), diz (0, 0), ayak bilegi (2, 0) noktalarini ver
-            - Hesaplanan acinin 90 dereceye yakin oldugunu kontrol et
+            - Set hip (0, 2), knee (0, 0), ankle (2, 0)
+            - Assert calculated angle equals 90.0 +/- 0.1 deg
         """
         pass
 
     def test_known_angle_45_degrees(self):
         """
-        45 derecelik bilinen aci degerini dogrular.
+        Verify accuracy against an analytically known 45.0 degree angle.
 
         TODO:
-            - Trigonometrik olarak 45 derece olusturan koordinatlar sec
-            - Hesaplanan acinin 45 +/- 0.1 derece oldugunu kontrol et
+            - Provide coordinates forming exact 45-degree angle
+            - Assert calculated angle equals 45.0 +/- 0.1 deg
         """
         pass
 
     def test_butterworth_filter_smooths_noise(self):
         """
-        Butterworth filtresinin gurultulu sinyali yumusattigini dogrular.
+        Verify that Butterworth second-order low-pass filter reduces high-frequency variance.
 
         TODO:
-            - Temiz sinus sinyali + beyaz gurultu olustur
-            - Filtre uygula
-            - Filtrelenmis sinyalin varyansinin orijinalden dusuk oldugunu kontrol et
+            - Generate pure sine wave + additive Gaussian noise
+            - Pass through filter
+            - Assert variance of filtered signal is significantly lower than noisy signal
         """
         pass
 
     def test_interpolation_matches_timestamps(self):
         """
-        Zaman enterpolasyonunun dogru sonuc verdigini dogrular.
+        Verify linear interpolation of asynchronous camera/encoder timestamps.
 
         TODO:
-            - Bilinen kamera zaman damgalari ve aci degerleri olustur
-            - Farkli enkoder zaman damgalari icin enterpolasyon yap
-            - Beklenen degerlerle karsilastir
+            - Define reference camera timestamps and angles
+            - Interpolate at arbitrary query timestamps
+            - Assert interpolated values match linear expectation
         """
         pass

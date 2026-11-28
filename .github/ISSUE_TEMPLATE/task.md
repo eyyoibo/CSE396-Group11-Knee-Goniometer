@@ -1,42 +1,34 @@
 ---
-name: Geliştirme Görevi
-about: Planlanan bir geliştirme görevi oluşturmak için bu şablonu kullanın
-title: "[GÖREV] "
+name: Development Task
+about: Track a planned technical work item or implementation task
+title: "[TASK] "
 labels: ''
 assignees: ''
 ---
 
-## Görev Açıklaması
+## Task Description
+A clear and concise description of the engineering work to be completed.
 
-Yapılması gereken işi açık ve net bir şekilde tanımlayın.
+## Acceptance Criteria
+Conditions required for this task to be considered complete:
+- [ ] Criterion 1
+- [ ] Criterion 2
+- [ ] Criterion 3
+- [ ] Unit tests added / updated and passing
+- [ ] Code reviewed and documented
 
-## Kabul Kriterleri
+## Target Module
+- [ ] **Module 1 — Hardware & Encoder Signal Processing**
+- [ ] **Module 2 — Desktop Interface & RMSE Analysis**
+- [ ] **Module 3 — Simulation & MediaPipe Pose Estimation**
+- [ ] **Module 4 — Mobile Application**
+- [ ] **Shared / Infrastructure**
 
-Bu görevin tamamlanmış sayılması için karşılanması gereken koşullar:
+## Estimated Effort
+- [ ] **S (Small)** — A few hours
+- [ ] **M (Medium)** — 1 to 3 days
+- [ ] **L (Large)** — More than 3 days
 
-- [ ] Kriter 1
-- [ ] Kriter 2
-- [ ] Kriter 3
-- [ ] Birim testleri yazıldı ve geçiyor
-- [ ] Kod gözden geçirildi
-
-## İlgili Modül
-
-- [ ] **M1 — Donanım ve Gömülü Yazılım**
-- [ ] **M2 — Masaüstü Arayüz**
-- [ ] **M3 — Kamera ve Görüntü İşleme**
-- [ ] **M4 — Mobil Uygulama**
-- [ ] **Ortak / Altyapı**
-
-## Tahmini Efor
-
-- [ ] **S (Küçük)** — Birkaç saat içinde tamamlanabilir
-- [ ] **M (Orta)** — 1-3 gün sürebilir
-- [ ] **L (Büyük)** — 3 günden fazla sürebilir
-
-## Bağımlılıklar
-
-Bu görevin başlayabilmesi veya tamamlanabilmesi için gereken ön koşulları listeleyin.
-
-- Bağımlılık 1 (örn. #issue_no)
-- Bağımlılık 2
+## Dependencies / Pre-requisites
+List any tasks or PRs that must be completed before this work can begin.
+- Dependency 1 (e.g. #issue_number)

@@ -1,32 +1,35 @@
-# Paylasilan Yardimci Araclar (Shared Utilities)
+# Shared Utilities & Cross-Module Tools
 
-Bu dizin, birden fazla modul tarafindan ortaklasa kullanilan yardimci arac ve betikleri icerir.
+This directory contains cross-cutting utilities, data schemas, and hardware-free simulation tools utilized across all modules.
 
-## Dosyalar
+---
 
-### packet_parser.py
-ESP32 tarafindan gonderilen 28 baytlik telemetri paketlerini cozen yardimci sinif.
-Hem Modul 2 (masaustu arayuz) hem de test altyapisi tarafindan kullanilir.
+## 1. Components
 
-**Sorumluluklar:**
-- Bayt akisindan paket basligini (0xAA 0x55) bulma
-- Struct unpacking ile alanlari ayristirma
-- CRC16 dogrulama
-- Hata durumlarini raporlama
+### `packet_parser.py`
+High-throughput binary packet parser for unpacking and verifying the 28-byte hardware telemetry frame streamed by the ESP32.
+- Scans continuous byte streams for magic header `0xAA 0x55`
+- Unpacks little-endian C struct payload
+- Computes and verifies CRC-16/CCITT checksum integrity
+- Returns typed `TelemetryPacket` instances
 
-### synthetic_data_generator.py
-Fiziksel donanim olmadan Modul 2 ve Modul 3 gelistirmesini mumkun kilan sentetik veri ureteci.
+### `synthetic_data_generator.py`
+Hardware-in-the-loop simulator enabling development of Module 2 (Desktop GUI) and Module 3 (Temporal Alignment) without physical ESP32 or encoder hardware.
+- Generates realistic cyclical knee flexion kinematics (simulated squat motion)
+- Adds configurable Gaussian noise
+- Transmits valid 28-byte binary packets via virtual COM ports or local TCP sockets (`127.0.0.1:9000`) at 50 Hz
 
-**Sorumluluklar:**
-- Gercekci sinus dalga tabanlı diz acisi kaliplari uretme
-- Yapilandirılabilir gurultu ekleme
-- 28 baytlik paket formatinda veri olusturma
-- Sanal seri port veya TCP soket uzerinden cikti verme
-- Parametreler: frekans, genlik, gurultu seviyesi, cikis portu
+### `sample_session.csv`
+Canonical reference dataset demonstrating the synchronized multi-channel CSV export schema.
 
-## Kullanim
+---
+
+## 2. Usage Examples
 
 ```bash
-# Sentetik veri ile masaustu arayuzu test etme
-python shared/synthetic_data_generator.py --port COM_VIRTUAL --hz 50 --noise 0.5
+# Launch synthetic 50 Hz squat generator over local TCP socket
+python shared/synthetic_data_generator.py --tcp 127.0.0.1:9000 --hz 50 --noise 0.3
+
+# Launch synthetic generator over virtual serial port
+python shared/synthetic_data_generator.py --port COM_VIRTUAL --hz 50
 ```

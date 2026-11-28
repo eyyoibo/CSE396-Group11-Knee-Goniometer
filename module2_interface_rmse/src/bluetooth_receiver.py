@@ -1,135 +1,85 @@
 """
-Diz Gonyometresi — Bluetooth Seri Veri Alıcı
+Bluetooth Serial Receiver — Background Acquisition Worker
 
-Arka plan iş parçacığında (QThread) Bluetooth SPP seri portunu dinler,
-gelen bayt akışından 28 baytlık telemetri paketlerini ayrıştırır
-ve doğrulanmış paketleri sinyal ile ana pencereye iletir.
+Listens to the Bluetooth SPP serial port in a dedicated QThread worker,
+extracts 28-byte binary telemetry frames from the continuous byte stream,
+validates CRC-16/CCITT checksums, and emits verified frames to the UI thread.
 
-Proje Ekibi: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin
-Danışman: Prof. Dr. Erkan Zergeroglu
+Project Team: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin, Cansu Bulut
 """
 
 import struct
+from typing import Optional, Dict, Any
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
-
-# Paket sabitleri (telemetry_packet.h ile uyumlu)
+# Packet constants matching telemetry_packet.h
 HEADER_BYTE_0 = 0xAA
 HEADER_BYTE_1 = 0x55
 PACKET_SIZE = 28
+STRUCT_FORMAT = "<2sIIiiffH"
 
 
 class BluetoothReceiver(QThread):
     """
-    Bluetooth SPP seri portunu arka planda okuyan iş parçacığı.
+    Background worker thread for continuous Bluetooth SPP serial reception.
 
-    Gelen ham bayt akışını sürekli tarayarak başlık eşleşmesi yapar,
-    28 baytlık paketleri çıkarır, CRC doğrulamasından geçirir ve
-    geçerli paketleri ``packet_received`` sinyali ile yayınlar.
-
-    Sinyaller:
-        packet_received(dict): Ayrıştırılmış ve doğrulanmış paket verisi.
-        connection_lost():     Bağlantı koptuğunda yayınlanır.
+    Signals:
+        packet_received(dict): Emits verified, unpacked telemetry dictionary.
+        connection_lost(): Emitted when the serial connection terminates abruptly.
     """
 
     packet_received = pyqtSignal(dict)
     connection_lost = pyqtSignal()
 
-    def __init__(self, port_name: str, baud_rate: int = 115200, parent=None):
-        """
-        @param port_name: Seri port adı (ör. "COM5")
-        @param baud_rate: Baud hızı (varsayılan 115200)
-        """
+    def __init__(self, port_name: str, baud_rate: int = 115200, parent=None) -> None:
         super().__init__(parent)
         self._port_name = port_name
         self._baud_rate = baud_rate
         self._running = False
+        self._serial_handle = None
 
-        # TODO: serial.Serial nesnesini burada tutmak için öznitelik tanımlayın
-
-    # ----------------------------------------------------------------
-    # run
-    # ----------------------------------------------------------------
     def run(self) -> None:
         """
-        İş parçacığının ana döngüsü. Port açılır ve sürekli okunur.
+        Main worker execution loop.
 
         TODO:
-        - serial.Serial ile portu aç (timeout=0.1)
-        - self._running True olduğu sürece döngüde oku
-        - Gelen baytları dahili bir tampona ekle
-        - Tampon içinde başlık baytlarını (0xAA, 0x55) ara
-        - Başlık bulunduğunda ve yeterli bayt varsa (>=28), paketi çıkar
-        - parse_packet ile ayrıştır
-        - validate_crc ile doğrula
-        - Geçerliyse packet_received sinyalini yayınla
-        - Geçersizse 1 bayt ilerle ve tekrar ara
-        - serial.SerialException yakalanırsa connection_lost yayınla
-        - Döngü bitince portu kapat
+        - Open serial.Serial connection to self._port_name with timeout
+        - While self._running is True:
+            - Read bytes from serial into circular search buffer
+            - Scan for 0xAA 0x55 magic header
+            - When 28 bytes accumulated, call self.parse_packet(buffer)
+            - If valid, emit self.packet_received.emit(packet_dict)
+            - Handle SerialException and emit self.connection_lost
         """
-        pass
+        self._running = True
 
-    # ----------------------------------------------------------------
-    # parse_packet
-    # ----------------------------------------------------------------
-    def parse_packet(self, raw_bytes: bytes) -> dict:
+    def stop(self) -> None:
+        """Stops worker execution and closes serial handle."""
+        self._running = False
+        if self._serial_handle and self._serial_handle.is_open:
+            self._serial_handle.close()
+        self.wait()
+
+    def parse_packet(self, raw_bytes: bytes) -> Optional[Dict[str, Any]]:
         """
-        28 baytlık ham veriyi alanlarına ayrıştırır.
-
-        @param raw_bytes: 28 baytlık ham paket verisi
-        @return: Ayrıştırılmış alanları içeren sözlük
+        Unpacks and validates a 28-byte raw telemetry slice.
 
         TODO:
-        - struct.unpack ile alanları çöz
-          Format (little-endian): '<2B I I i i f f H'
-            2B  → header[0], header[1]
-            I   → seq (uint32)
-            I   → timestamp_ms (uint32)
-            i   → left_count (int32)
-            i   → right_count (int32)
-            f   → left_angle (float32)
-            f   → right_angle (float32)
-            H   → crc16 (uint16)
-        - Sözlük olarak döndür:
-          {
-              "seq": ...,
-              "timestamp_ms": ...,
-              "left_count": ...,
-              "right_count": ...,
-              "left_angle": ...,
-              "right_angle": ...,
-              "crc16": ...
-          }
+        - Check length == PACKET_SIZE
+        - Verify magic header bytes {0xAA, 0x55}
+        - Unpack struct using STRUCT_FORMAT
+        - Calculate CRC-16 over bytes 0-25 using validate_crc()
+        - Return dictionary of fields if valid, None otherwise
         """
-        return {}
+        return None
 
-    # ----------------------------------------------------------------
-    # validate_crc
-    # ----------------------------------------------------------------
-    def validate_crc(self, raw_bytes: bytes) -> bool:
+    def validate_crc(self, payload: bytes, expected_crc: int) -> bool:
         """
-        Paketin CRC-16/CCITT kontrol toplamını doğrular.
-
-        @param raw_bytes: 28 baytlık ham paket (son 2 bayt CRC)
-        @return: CRC geçerliyse True, değilse False
+        Verifies CRC-16/CCITT checksum over packet payload.
 
         TODO:
-        - İlk 26 bayt üzerinden CRC-16/CCITT hesapla (başlangıç: 0xFFFF, polinom: 0x1021)
-        - Hesaplanan değeri paketin son 2 baytındaki CRC ile karşılaştır
-        - Eşleşiyorsa True döndür
+        - Compute CRC-16 matching ESP32 firmware implementation
+        - Return True if computed == expected_crc
         """
         return False
-
-    # ----------------------------------------------------------------
-    # stop
-    # ----------------------------------------------------------------
-    def stop(self) -> None:
-        """
-        İş parçacığını güvenli şekilde durdurur.
-
-        TODO:
-        - self._running = False yap
-        - İş parçacığının bitmesini bekle (self.wait)
-        """
-        self._running = False

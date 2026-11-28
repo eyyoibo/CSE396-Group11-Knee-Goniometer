@@ -1,24 +1,24 @@
 ---
-title: "[M2] Kayan Pencere (5s) MAE/RMSE ve Tepe Aci Farki Analiz Motoru"
+title: "[M2] Sliding-Window (5s) RMSE, MAE, and Peak Discrepancy Engine"
 labels: ["module-2", "software", "priority-high"]
 milestone: "M2-Desktop MVP"
-assignees: ["Ibrahim Halil Dogan", "Cem Baygin"]
+assignees: ["Cem Baygin", "Cansu Bulut"]
 ---
 
-## 📌 Is Tanimi
-Enkoder aci serisi ile kameradan elde edilen ve ayni zaman eksenine hizalanmis kamera aci serisi arasindaki olcum farklari; canli olcum sirasinda son 5 saniyelik kayan pencere uzerinde, oturum sonunda ise tum gecerli kayit icin istatistiksel metriklerle hesaplanacaktir.
+## 📌 Task Description
+Compute statistical discrepancy metrics between the encoder angle series and the temporally synchronized optical camera angle series. Provide real-time updates over a trailing 5-second sliding window during active motion, as well as cumulative summary statistics at session completion.
 
-## 🎯 Formüller ve Kabul Kriterleri
-- [ ] **Ortalama Mutlak Hata (MAE):**
-  $$\text{MAE} = \frac{1}{N} \sum_{i=1}^{N} |\theta_{kamera}(t_i) - \theta_{enkoder}(t_i)|$$
-- [ ] **Kök Ortalama Kare Hata (RMSE):**
-  $$\text{RMSE} = \sqrt{\frac{1}{N} \sum_{i=1}^{N} (\theta_{kamera}(t_i) - \theta_{enkoder}(t_i))^2}$$
-- [ ] **Ortalama Sapma (Bias, $\bar{d}$):**
-  $$\bar{d} = \frac{1}{N} \sum_{i=1}^{N} (\theta_{kamera}(t_i) - \theta_{enkoder}(t_i))$$
-- [ ] **Tepe Aci Farki ($\Delta\theta_{peak}$):** Hareketin tepe noktasindaki (maksimum fleksiyon) mutlak aci farki.
-- [ ] MediaPipe tarafindan gecersiz (visibility < 0.6) olarak isaretlenen kareler hata hesabina katilmamali, gecersiz kare orani ayrica hesaplanmali.
-- [ ] Arayuz sag panelindeki LED/etiket kutularinda bu metrikler canli guncellenmeli.
+## 🎯 Formulas and Acceptance Criteria
+- [ ] **Mean Absolute Error (MAE):**
+  $$\text{MAE} = \frac{1}{N} \sum_{i=1}^{N} |\theta_{\text{cam}}(t_i) - \theta_{\text{enc}}(t_i)|$$
+- [ ] **Root Mean Square Error (RMSE):**
+  $$\text{RMSE} = \sqrt{\frac{1}{N} \sum_{i=1}^{N} (\theta_{\text{cam}}(t_i) - \theta_{\text{enc}}(t_i))^2}$$
+- [ ] **Mean Bias ($\bar{d}$):**
+  $$\bar{d} = \frac{1}{N} \sum_{i=1}^{N} (\theta_{\text{cam}}(t_i) - \theta_{\text{enc}}(t_i))$$
+- [ ] **Peak Angle Discrepancy ($\Delta\theta_{\text{peak}}$):** Absolute angle difference recorded at the point of maximum flexion.
+- [ ] Frames flagged as occluded or low-confidence (visibility < 0.6) must be excluded from error accumulation and tracked as an invalid frame percentage.
+- [ ] Render live values in the dashboard metrics panel with visual tolerance thresholds (green: MAE < 3°, amber: 3°-6°, red: > 6°).
 
-## 📋 Alt Gorevler
-- [ ] `module2_interface_rmse/src/analysis_engine.py` icinde `compute_sliding_rmse` ve `compute_sliding_mae` metodlarini gercekle.
-- [ ] `tests/test_analysis_engine.py` unit testlerini calistirip dogrula.
+## 📋 Subtasks
+- [ ] Implement `compute_sliding_rmse()` and `compute_sliding_mae()` in `module2_interface_rmse/src/analysis_engine.py`.
+- [ ] Verify correctness using unit tests in `tests/test_analysis_engine.py`.

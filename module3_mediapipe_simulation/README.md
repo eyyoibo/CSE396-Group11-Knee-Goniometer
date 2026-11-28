@@ -1,147 +1,86 @@
-# Modül 3: Simülasyon ve MediaPipe Kamera Tabanlı Açı Tahmini
+# Module 3: Simulation & MediaPipe Pose Angle Estimation
 
-## Genel Bakış
+## Overview
 
-Bu modül, tek bir RGB kamera görüntüsünden diz fleksiyon/ekstensiyon açısının gerçek zamanlı
-olarak hesaplanmasını sağlar. Sagittal düzlemde konumlandırılmış bir kamera (1080p, 30 FPS)
-aracılığıyla MediaPipe Pose (BlazePose) modeli kullanılarak vücut yer işaretleri (landmark)
-tespit edilir. Tespit edilen kalça, diz ve ayak bileği koordinatlarından vektörel hesaplamayla
-diz açısı elde edilir. Elde edilen açı verileri, enkoder referans verileriyle zaman
-senkronizasyonu yapılarak karşılaştırma analizine uygun hale getirilir.
+This module implements the markerless optical motion capture pipeline. Utilizing a monocular RGB camera (1080p @ 30 FPS) positioned in the sagittal plane, it tracks lower-extremity body landmarks using Google MediaPipe Pose (BlazePose). Flexion-extension knee angles are computed through 2D vector kinematics, filtered with a low-pass Butterworth filter to suppress optical jitter, and time-aligned with the 50 Hz hardware encoder telemetry via linear timestamp interpolation.
 
-Ayrıca, video akışı üzerine 2B şematik bacak simülasyonu çizilerek kullanıcıya anlık
-görsel geri bildirim sunulur.
+Additionally, it renders a real-time 2D schematic kinematic skeleton overlay and live HUD on the video stream.
 
-## MediaPipe Pipeline
+---
 
-Sistem aşağıdaki MediaPipe Pose (BlazePose GHUM 3D) iş akışını kullanır:
+## Computer Vision Pipeline
 
-1. **Kare Yakalama**: OpenCV `VideoCapture` ile kameradan 1920×1080 çözünürlükte, 30 FPS
-   kare alınır.
-2. **Ön İşleme**: Her kare BGR'den RGB'ye dönüştürülür (MediaPipe giriş formatı).
-3. **Poz Tahmini**: `mp.solutions.pose.Pose` modeli kareler üzerinde çalıştırılır.
-4. **Landmark Çıkarımı**: 33 vücut noktasından yalnızca alt ekstremite noktaları kullanılır:
-   - Kalça: `LEFT_HIP (23)` / `RIGHT_HIP (24)`
-   - Diz: `LEFT_KNEE (25)` / `RIGHT_KNEE (26)`
-   - Ayak Bileği: `LEFT_ANKLE (27)` / `RIGHT_ANKLE (28)`
-5. **Görünürlük Kontrolü**: Her landmark'ın `visibility` skoru kontrol edilir.
-   Eşik değeri 0.6'nın altındaki kareler analizden çıkarılır.
+1. **Frame Capture:** OpenCV `VideoCapture` acquires frames at 1920x1080 resolution and 30 FPS with microsecond monotonic timestamps.
+2. **Preprocessing:** Frame color conversion from BGR to RGB format required by MediaPipe.
+3. **Landmark Extraction:** Extracts 2D normalized coordinates for camera-facing lower-limb joints:
+   - Hip: `LEFT_HIP (23)` or `RIGHT_HIP (24)`
+   - Knee: `LEFT_KNEE (25)` or `RIGHT_KNEE (26)`
+   - Ankle: `LEFT_ANKLE (27)` or `RIGHT_ANKLE (28)`
+4. **Visibility & Occlusion Screening:** Evaluates landmark visibility scores. Frames exhibiting visibility below $0.6$ on any key joint are flagged as invalid and excluded from discrepancy calculations.
 
-## Açı Hesaplama Matematiği
+---
 
-Diz açısı, kalça-diz vektörü ile diz-ayak bileği vektörü arasındaki açı olarak hesaplanır.
+## Mathematical Formulations
 
-### Vektör Tanımları
+### 1. Vector Dot Product Angle Calculation
+From extracted sagittal joint coordinates:
+$$\vec{u} = P_{hip} - P_{knee}$$
+$$\vec{v} = P_{ankle} - P_{knee}$$
 
-```
-V1 = (hip.x - knee.x, hip.y - knee.y)    # Kalça-Diz vektörü
-V2 = (ankle.x - knee.x, ankle.y - knee.y) # Ayak Bileği-Diz vektörü
-```
+$$\cos(\alpha) = \text{clip}\left(\frac{\vec{u} \cdot \vec{v}}{\|\vec{u}\| \|\vec{v}\|}, -1.0, 1.0\right)$$
+$$\alpha = \arccos(\cos(\alpha)) \cdot \frac{180^\circ}{\pi}$$
+$$\theta_{camera} = 180^\circ - \alpha$$
 
-### Nokta Çarpım Formülü
+*(Anatomical straight-leg standing position corresponds to approximately $0^\circ$ flexion).*
 
-```
-cos(θ) = (V1 · V2) / (|V1| × |V2|)
-θ = arccos(cos(θ))
-```
+### 2. Jitter Attenuation (Butterworth Low-Pass Filter)
+Human joint kinematics typically operate below 6 Hz. A 2nd-order digital Butterworth filter is applied:
+- Cutoff frequency ($f_c$): $6.0\text{ Hz}$
+- Sampling rate ($f_s$): $30\text{ Hz}$ (Camera frame rate)
+- Implementation: Zero-phase forward-backward filtering (`scipy.signal.filtfilt`)
 
-Burada:
-- `V1 · V2` = `V1.x × V2.x + V1.y × V2.y` (skaler çarpım)
-- `|V1|` = `sqrt(V1.x² + V1.y²)` (vektör büyüklüğü)
-- Sonuç radyandan dereceye çevrilir: `açı_derece = θ × (180 / π)`
+### 3. Temporal Synchronization & Interpolation
+To compare 30 FPS optical angles with 50 Hz encoder telemetry:
+- Hardware uptime timestamps and PC system timestamps are aligned at session start.
+- `np.interp` linearly interpolates optical angles onto the continuous 50 Hz hardware timestamps.
+- Missing or occluded frames are preserved as `NaN` values to avoid interpolation artifacts.
 
-### Gürültü Azaltma
+---
 
-Ham açı sinyaline düşük geçişli Butterworth filtresi uygulanır:
-- Filtre tipi: 2. dereceden düşük geçişli (low-pass)
-- Kesim frekansı: Ayarlanabilir (varsayılan ~6 Hz, insan diz hareketi bant genişliğine uygun)
-- Örnekleme frekansı: 30 Hz (kamera FPS)
+## 2D Kinematic Simulation Overlay
 
-## Zaman Senkronizasyonu Stratejisi
+The rendering engine overlays the following graphics onto the real-time video feed:
+* **Segment Links (Bones):** Color-coded lines connecting Hip $\rightarrow$ Knee $\rightarrow$ Ankle.
+* **Joint Centers:** Circular highlights at detected landmark positions.
+* **Angle Arc:** Dynamic arc centered at the knee joint indicating measured flexion.
+* **HUD Information Panel:** Semi-transparent panel showing:
+  - Instantaneous Knee Angle (degrees)
+  - Landmark Visibility Score ($0.0 - 1.0$)
+  - Live Processing FPS
+  - Session Frame Counter
 
-Kamera (30 FPS) ve rotary enkoder (50 Hz) farklı örnekleme hızlarına sahip olduğundan,
-karşılaştırma için zaman hizalaması gereklidir.
+---
 
-### Yöntem: Zaman Damgası Tabanlı Doğrusal İnterpolasyon
+## Dependencies & Installation
 
-1. Her kamera karesine `time.perf_counter()` ile milisaniye hassasiyetinde zaman damgası
-   atanır.
-2. Enkoder verileri kendi zaman damgalarıyla (ESP32 `millis()`) kaydedilir.
-3. Her iki zaman serisinin başlangıç anları bir senkronizasyon sinyaliyle hizalanır.
-4. `numpy.interp()` kullanılarak kamera açı verileri, enkoder zaman noktalarına
-   doğrusal olarak interpole edilir.
-5. Böylece aynı zaman ekseninde iki sinyal karşılaştırılabilir hale gelir.
-
-### Dikkat Edilecekler
-
-- Kamera ve ESP32 saatleri arasında drift oluşabilir; uzun kayıtlarda periyodik
-  senkronizasyon tetikleyicisi gerekebilir.
-- Görünürlük filtresi nedeniyle atlanan karelerde interpolasyon boşlukları oluşabilir;
-  bu boşluklar `NaN` olarak işaretlenir.
-
-## Simülasyon Görüntüleme
-
-Video akışı üzerine gerçek zamanlı olarak şu görsel öğeler çizilir:
-
-- **İskelet Çizimi**: Kalça → Diz → Ayak Bileği arasında renkli çizgiler ve eklem
-  noktalarında daireler.
-- **Açı Yayı**: Diz noktası merkezli, hesaplanan açıyı gösteren bir yay çizimi.
-- **Bilgi Paneli**: Kare üzerine yarı-saydam bir kutu içinde:
-  - Anlık diz açısı (derece)
-  - Landmark görünürlük skorları
-  - Anlık FPS değeri
-  - Kayıt süresi
-
-## Bağımlılıklar
-
-| Paket | Sürüm | Açıklama |
-|-------|--------|----------|
-| mediapipe | ≥ 0.10.0 | Poz tahmini modeli |
-| opencv-python | ≥ 4.8.0 | Kamera yakalama ve görüntü işleme |
-| numpy | ≥ 1.24.0 | Sayısal hesaplamalar ve interpolasyon |
-| scipy | ≥ 1.11.0 | Butterworth filtre tasarımı |
-| matplotlib | ≥ 3.7.0 | Opsiyonel: çevrimdışı grafik çizimi |
-
-Kurulum:
 ```bash
 pip install -r requirements.txt
 ```
 
-## Kullanım
-
-```bash
-# Temel kullanım - varsayılan kamera (ID=0) ile başlat
-python -m module3_mediapipe_simulation.src.main
-
-# Belirli bir kamera ID'si ve çözünürlük ile
-python -m module3_mediapipe_simulation.src.main --camera-id 1 --width 1920 --height 1080
-
-# Kayıt modu - açı verilerini CSV dosyasına yaz
-python -m module3_mediapipe_simulation.src.main --record --output session_01.csv
-```
-
-> **Not**: Kameranın sagittal düzlemde (yandan görünüm) konumlandırılması doğruluk
-> açısından kritik öneme sahiptir. Frontal düzlem görüntüsü açı hesabında büyük
-> hatalara yol açar.
-
-## Yapılacaklar (TODO)
-
-- [ ] `CameraCapture` sınıfı: kamera açma/kapama ve kare okuma mantığı
-- [ ] `PoseDetector` sınıfı: MediaPipe Pose entegrasyonu ve landmark çıkarımı
-- [ ] `AngleCalculator` sınıfı: vektörel açı hesabı implementasyonu
-- [ ] `AngleCalculator`: Butterworth filtre implementasyonu
-- [ ] `AngleCalculator`: interpolasyon fonksiyonu implementasyonu
-- [ ] `SimulationRenderer` sınıfı: iskelet overlay çizimi
-- [ ] `SimulationRenderer`: açı yayı çizimi
-- [ ] `SimulationRenderer`: bilgi paneli çizimi
-- [ ] Ana döngü (`main.py`): tüm bileşenlerin entegrasyonu
-- [ ] Sağ/sol bacak seçimi parametre olarak eklenecek
-- [ ] Görünürlük eşik değeri komut satırı parametresi olarak eklenecek
-- [ ] Enkoder veri dosyası yükleme ve senkronizasyon testi
-- [ ] Performans optimizasyonu: kare atlama stratejisi (gerekirse)
-- [ ] Birim testleri: açı hesaplama ve interpolasyon fonksiyonları için
+| Package | Minimum Version | Description |
+|---|---|---|
+| `mediapipe` | $\ge 0.10.0$ | BlazePose landmark detection model |
+| `opencv-python` | $\ge 4.8.0$ | Video capture and real-time graphics rendering |
+| `numpy` | $\ge 1.24.0$ | Vector trigonometry and array interpolation |
+| `scipy` | $\ge 1.11.0$ | Butterworth filter design and signal processing |
 
 ---
 
-**Proje Ekibi**: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin
-**Akademik Danışman**: Prof. Dr. Erkan Zergeroglu
+## TODO Checklist
+
+- [ ] Implement OpenCV camera thread in `camera_capture.py`
+- [ ] Implement MediaPipe Pose inference wrapper in `pose_detector.py`
+- [ ] Implement vector angle calculation and zero-clamping in `angle_calculator.py`
+- [ ] Implement Butterworth filter in `angle_calculator.py`
+- [ ] Implement linear interpolation in `angle_calculator.py`
+- [ ] Implement 2D schematic skeleton and HUD overlay in `simulation_renderer.py`

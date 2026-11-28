@@ -1,45 +1,36 @@
 ---
-name: Hata Raporu
-about: Karşılaştığınız bir hatayı bildirmek için bu şablonu kullanın
-title: "[HATA] "
+name: Bug Report
+about: Create a report to help us improve and fix an issue
+title: "[BUG] "
 labels: bug
 assignees: ''
 ---
 
-## Hata Açıklaması
+## Bug Description
+A clear and concise description of what the bug is.
 
-Hatayı açık ve net bir şekilde tanımlayın.
+## Steps to Reproduce
+Steps to reproduce the behavior:
+1. Navigate to '...'
+2. Click on '...'
+3. Perform '...'
+4. See error
 
-## Yeniden Üretme Adımları
+## Expected Behavior
+A clear and concise description of what you expected to happen.
 
-Hatayı yeniden üretmek için izlenmesi gereken adımlar:
+## Actual Behavior
+A clear and concise description of what actually happened.
 
-1. '...' ekranına gidin
-2. '...' butonuna tıklayın
-3. '...' işlemini gerçekleştirin
-4. Hatayı gözlemleyin
+## Environment Details
+- **Operating System:** [e.g. Windows 11, Ubuntu 22.04]
+- **Python Version:** [e.g. 3.10.12]
+- **ESP32 Firmware Version:** [e.g. v1.0.0]
+- **Bluetooth Subsystem:** [e.g. Bluetooth Classic SPP / BLE]
+- **Camera Model:** [if applicable, e.g. Logitech C920]
 
-## Beklenen Davranış
+## Screenshots / Logs
+If applicable, add screenshots or terminal log output to help explain your problem.
 
-Normalde ne olması gerektiğini açıklayın.
-
-## Gerçekleşen Davranış
-
-Gerçekte ne olduğunu açıklayın.
-
-## Ortam Bilgileri
-
-- **İşletim Sistemi:** [örn. Windows 11, Ubuntu 22.04]
-- **Python Sürümü:** [örn. 3.10.12]
-- **ESP32 Firmware Sürümü:** [örn. v1.2.0]
-- **Bluetooth Modülü:** [örn. dahili ESP32 BLE]
-- **Kamera Modeli:** [varsa, örn. Logitech C920]
-
-## Ekran Görüntüleri
-
-Varsa, hatayı gösteren ekran görüntülerini buraya ekleyin.
-
-## Ek Bağlam
-
-Hata hakkında eklemek istediğiniz başka bilgiler varsa buraya yazın.
-Örneğin log çıktıları, hata mesajları veya ilgili konfigürasyon dosyaları.
+## Additional Context
+Add any other context about the problem here.

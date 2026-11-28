@@ -1,31 +1,27 @@
 """
-Diz Gonyometresi — CSV Veri Kayıt Modülü
+CSV Data Logger Module — Synchronized Session Disk Exporter
 
-Oturum bazlı CSV dosya oluşturma, satır yazma ve
-dosya kapatma işlemlerini yönetir.
+Handles timestamped CSV session creation, buffered row writing,
+and safe file closure for synchronized dual-modal kinematics records.
 
-Proje Ekibi: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin
-Danışman: Prof. Dr. Erkan Zergeroglu
+Project Team: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin, Cansu Bulut
 """
 
 import csv
+from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
 
 
 class CSVLogger:
     """
-    Telemetri verilerini zaman damgalı CSV dosyasına kaydeden sınıf.
+    Session CSV recorder with buffered disk flushing and header management.
 
-    Her kayıt oturumu için benzersiz dosya adıyla yeni bir CSV dosyası
-    oluşturulur. Dosya başlığı otomatik yazılır.
-
-    CSV sütunları:
+    Output schema:
         timestamp_ms, seq, left_count, right_count,
-        left_angle, right_angle, camera_angle, rmse, mae
+        left_angle, right_angle, camera_angle, visibility, valid_flag
     """
 
-    # CSV başlık satırı
     FIELDNAMES = [
         "timestamp_ms",
         "seq",
@@ -34,80 +30,68 @@ class CSVLogger:
         "left_angle",
         "right_angle",
         "camera_angle",
-        "rmse",
-        "mae",
+        "visibility",
+        "valid_flag",
     ]
 
-    def __init__(self, output_dir: str = "recordings"):
-        """
-        @param output_dir: Kayıt dosyalarının oluşturulacağı dizin yolu
-        """
-        self._output_dir = Path(output_dir)
+    def __init__(self, output_dir: str = "recordings") -> None:
+        self.output_dir = Path(output_dir)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         self._file = None
         self._writer: Optional[csv.DictWriter] = None
         self._row_count = 0
 
-    # ----------------------------------------------------------------
-    # start_session
-    # ----------------------------------------------------------------
-    def start_session(self, session_name: Optional[str] = None) -> Path:
+    def start_session(self, subject_id: str = "SUBJ_01", task_name: str = "SQUAT") -> Path:
         """
-        Yeni bir kayıt oturumu başlatır ve CSV dosyasını oluşturur.
-
-        @param session_name: İsteğe bağlı oturum adı. Verilmezse
-                             zaman damgasından otomatik oluşturulur.
-        @return: Oluşturulan CSV dosyasının yolu
+        Initializes a new recording file with standard session naming.
 
         TODO:
-        - Çıktı dizinini oluştur (yoksa)
-        - Dosya adını belirle: session_name veya "session_YYYYMMDD_HHMMSS.csv"
-        - Dosyayı yazma modunda aç
-        - csv.DictWriter oluştur ve başlık satırını yaz
-        - self._row_count sıfırla
-        - Dosya yolunu döndür
+        - Format: session_YYYYMMDD_HHMMSS_<subject_id>_<task_name>.csv
+        - Open file handle in write mode with newline=''
+        - Initialize csv.DictWriter with self.FIELDNAMES
+        - Write header row
+        - Reset self._row_count = 0
         """
-        return Path()
+        timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"session_{timestamp_str}_{subject_id}_{task_name}.csv"
+        file_path = self.output_dir / filename
 
-    # ----------------------------------------------------------------
-    # log_row
-    # ----------------------------------------------------------------
-    def log_row(self, data: dict) -> None:
+        self._file = open(file_path, mode="w", newline="", encoding="utf-8")
+        self._writer = csv.DictWriter(self._file, fieldnames=self.FIELDNAMES)
+        self._writer.writeheader()
+        self._row_count = 0
+        return file_path
+
+    def log_row(self, row_data: Dict[str, Any]) -> None:
         """
-        Bir satır veriyi CSV dosyasına yazar.
-
-        @param data: FIELDNAMES anahtarlarını içeren sözlük
+        Appends a synchronized data row to the active CSV session.
 
         TODO:
-        - Oturum aktif değilse (self._writer None) uyarı logla ve dön
-        - self._writer.writerow(data) ile satırı yaz
-        - self._row_count artır
+        - Validate that self._writer is active
+        - Filter dictionary keys to match self.FIELDNAMES
+        - Call writerow and increment self._row_count
+        - Periodically flush buffer every 50 rows
         """
-        pass
+        if self._writer:
+            filtered_data = {k: row_data.get(k, "") for k in self.FIELDNAMES}
+            self._writer.writerow(filtered_data)
+            self._row_count += 1
+            if self._row_count % 50 == 0 and self._file:
+                self._file.flush()
 
-    # ----------------------------------------------------------------
-    # end_session
-    # ----------------------------------------------------------------
     def end_session(self) -> int:
         """
-        Aktif kayıt oturumunu kapatır.
-
-        @return: Toplam yazılan satır sayısı
+        Flushes and closes the active file handle.
 
         TODO:
-        - Dosyayı kapat (self._file.close)
-        - self._writer = None yap
-        - Toplam satır sayısını döndür
+        - Flush buffer and close self._file
+        - Reset writer handle to None
+        - Return total recorded row count
         """
         count = self._row_count
-        self._row_count = 0
+        if self._file:
+            self._file.flush()
+            self._file.close()
+            self._file = None
+            self._writer = None
         return count
-
-    @property
-    def is_active(self) -> bool:
-        """Oturum aktif mi kontrolü."""
-        return self._writer is not None
-
-    @property
-    def row_count(self) -> int:
-        """Mevcut oturumda yazılan satır sayısı."""
-        return self._row_count

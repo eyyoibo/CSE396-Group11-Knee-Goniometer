@@ -1,83 +1,79 @@
 """
-Paket Cozumleyici (PacketParser) Birim Testleri
+Unit Tests for Telemetry PacketParser
 
-Telemetri paketlerinin dogru cozumlendisini, CRC dogrulamasini
-ve hata durumlarini test eder.
+Tests binary packet parsing, CRC16 verification, frame alignment, and error rejection.
 """
 
 import pytest
 import struct
 
-# TODO: shared.packet_parser import edildikten sonra aktif et
-# from shared.packet_parser import PacketParser, TelemetryPacket, PACKET_HEADER
-
 
 class TestPacketParser:
-    """PacketParser sinifi icin test senaryolari."""
+    """Test suite for PacketParser class."""
 
     def setup_method(self):
-        """Her test oncesi parser olustur."""
+        """Initialize parser instance before each test."""
         # TODO: parser = PacketParser()
         pass
 
     def test_valid_packet_parsing(self):
         """
-        Gecerli 28 baytlik bir paketin dogru cozumlendisini dogrular.
+        Verify that a well-formed 28-byte packet is parsed into correct telemetry fields.
 
         TODO:
-            - Bilinen degerlerle 28 baytlik paket olustur
-            - parse() ile cozumle
-            - Her alanin beklenen degerle eslestisini kontrol et
+            - Pack known values into 28-byte buffer
+            - Call parser.parse(buffer)
+            - Assert each extracted field matches expected values
         """
         pass
 
     def test_invalid_header_rejected(self):
         """
-        Yanlis header baytlarina sahip paketin reddedildigini dogrular.
+        Verify that a packet with corrupt/invalid magic header bytes is rejected.
 
         TODO:
-            - Header olarak 0xBB 0xCC kullanarak paket olustur
-            - parse() sonucunun None oldugunu kontrol et
+            - Create packet with header bytes 0xBB 0xCC instead of 0xAA 0x55
+            - Assert parse() returns None
         """
         pass
 
     def test_invalid_crc_rejected(self):
         """
-        Bozuk CRC degerine sahip paketin reddedildigini dogrular.
+        Verify that a packet with invalid CRC16 checksum is discarded.
 
         TODO:
-            - Gecerli paket olustur, CRC alanini boz
-            - parse() sonucunun None oldugunu kontrol et
+            - Create valid 28-byte packet, flip a bit in payload or CRC field
+            - Assert parse() returns None and records checksum error
         """
         pass
 
     def test_short_packet_rejected(self):
         """
-        28 baytan kisa paketlerin reddedildigini dogrular.
+        Verify that packets shorter than 28 bytes are safely rejected without exception.
 
         TODO:
-            - 20 baytlik eksik paket gonder
-            - parse() sonucunun None oldugunu kontrol et
+            - Pass truncated buffer (e.g. 20 bytes) to parse()
+            - Assert parse() returns None
         """
         pass
 
     def test_find_packet_start_in_buffer(self):
         """
-        Karisik veri icinde paket basliginin dogru bulundugunu dogrular.
+        Verify that the frame synchronizer correctly locates magic header 0xAA 0x55 in a noisy buffer.
 
         TODO:
-            - Rastgele baytlar + 0xAA 0x55 + paket verisi iceren tampon olustur
-            - find_packet_start() ile baslik konumunu bul
-            - Konumun dogru oldugunu kontrol et
+            - Construct byte stream with random junk bytes followed by 0xAA 0x55
+            - Call find_packet_start()
+            - Assert index correctly identifies the start of the frame
         """
         pass
 
     def test_angle_values_in_range(self):
         """
-        Cozumlenen aci degerlerinin makul aralikta (0-180) oldugunu dogrular.
+        Verify that parsed angle values fall within physiological bounds (0° - 180°).
 
         TODO:
-            - 0, 90, 180 derece iceren paketler olustur
-            - Her birinin dogru cozumlendisini kontrol et
+            - Test frames encoded with 0°, 90°, and 180°
+            - Check that floating-point conversions remain accurate within +/- 0.05 deg
         """
         pass

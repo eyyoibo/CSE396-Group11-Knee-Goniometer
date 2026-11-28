@@ -1,31 +1,31 @@
-# Test Altyapisi
+# Test Infrastructure
 
-Bu dizin, projenin birim testlerini icerir. Testler `pytest` ile calistirilir.
+This directory contains standalone unit test suites for the project. Tests are run using `pytest`.
 
-## Test Dosyalari
+## Test Suites
 
-| Dosya | Test Ettigi Modul | Aciklama |
-|-------|-------------------|----------|
-| `test_packet_parser.py` | Shared | Paket cozumleme, CRC dogrulama, hata durumlari |
-| `test_angle_calculator.py` | Modul 3 | Vektor aci hesabi, filtre, enterpolasyon |
-| `test_analysis_engine.py` | Modul 2 | RMSE/MAE hesaplama, Bland-Altman |
+| File | Target Module | Scope |
+|------|---------------|-------|
+| `test_packet_parser.py` | Shared | 28-byte packet parsing, CRC16 verification, error recovery |
+| `test_angle_calculator.py` | Module 3 | Vector dot product angle math, low-pass filter, interpolation |
+| `test_analysis_engine.py` | Module 2 | Sliding window RMSE/MAE metrics, Bland-Altman statistics |
 
-## Calistirma
+## Running Tests
 
 ```bash
-# Tum testleri calistir
+# Run all test suites
 pytest tests/ -v
 
-# Belirli bir test dosyasini calistir
+# Run a specific test suite
 pytest tests/test_packet_parser.py -v
 
-# Kapsam raporu ile
+# Run with test coverage reporting
 pytest tests/ --cov=shared --cov=module2_interface_rmse --cov=module3_mediapipe_simulation
 ```
 
-## Test Yazim Kurallari
+## Testing Standards & Conventions
 
-- Her yeni fonksiyon icin en az bir basarili ve bir basarisiz test senaryosu yazin
-- Fiziksel donanim gerektiren testleri `@pytest.mark.hardware` ile isaretleyin
-- Kamera gerektiren testleri `@pytest.mark.camera` ile isaretleyin
-- Bilinen aci degerleriyle dogruluk testleri olusturun
+- Every new calculation or utility function must include both positive and negative/boundary test cases.
+- Mark tests requiring physical hardware with `@pytest.mark.hardware`.
+- Mark tests requiring an optical camera or video capture device with `@pytest.mark.camera`.
+- Validate angle computation against known trigonometric vectors (0°, 45°, 90°, 180°).

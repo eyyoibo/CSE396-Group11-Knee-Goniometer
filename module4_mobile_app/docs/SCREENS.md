@@ -1,193 +1,71 @@
-# Uygulama Ekran Tasarımları
+# Mobile UI Screen Specifications
 
-Bu belge, diz gonyometresi mobil uygulamasının planlanmış ekranlarını, her ekranın
-amacını, temel arayüz öğelerini ve veri akışlarını açıklar.
-
----
-
-## 1. Bağlantı Ekranı
-
-### Amaç
-
-Kullanıcının yakındaki Bluetooth cihazlarını taraması ve ESP32 gonyometre
-modülüne bağlanmasını sağlar. Uygulama ilk açıldığında bu ekran gösterilir.
-
-### Temel Arayüz Öğeleri
-
-- **Tara Butonu**: Bluetooth taramasını başlatır/durdurur. Tarama sırasında
-  dönen bir animasyon gösterilir.
-- **Cihaz Listesi**: Bulunan Bluetooth cihazlarının adı ve MAC adresi ile
-  listelendiği kaydırılabilir alan. Daha önce bağlanılmış cihazlar listenin
-  üstünde ve farklı renkte gösterilir.
-- **Bağlantı Durumu Çubuğu**: Ekranın üst kısmında bağlantı durumunu gösteren
-  renkli bir bant (kırmızı: bağlı değil, sarı: bağlanıyor, yeşil: bağlı).
-- **Bluetooth İzin Uyarısı**: Bluetooth veya konum izni verilmemişse
-  görüntülenen bilgilendirme kartı ve ayarlara yönlendirme butonu.
-
-### Veri Akışı
-
-```
-Kullanıcı "Tara"ya basar
-  → Bluetooth adaptörü tarama başlatır
-  → Bulunan cihazlar listeye eklenir
-  → Kullanıcı bir cihaz seçer
-  → SPP bağlantısı kurulmaya çalışılır
-  → Başarılı → Gösterge Paneline otomatik geçiş
-  → Başarısız → Hata mesajı ve yeniden deneme seçeneği
-```
+This document outlines the user interface screens, layout requirements, data flows, and state interactions for the companion mobile application.
 
 ---
 
-## 2. Gösterge Paneli (Dashboard)
+## 1. Connection Screen
 
-### Amaç
+### Objective
+Enables scanning, discovery, and pairing with the ESP32 hardware (`ESP32_GONIOMETER`) over Bluetooth Classic SPP.
 
-ESP32'den gelen anlık diz açısı verisini büyük ve okunaklı bir kadran
-üzerinde gösterir. Fizyoterapistin hastaya bakarken ekrana hızlıca göz
-atabilmesi için tasarlanmıştır.
-
-### Temel Arayüz Öğeleri
-
-- **Analog Kadran (Gauge)**: Ekranın merkezi ve en büyük öğesi. 0°-180°
-  aralığında derecelendirilmiş dairesel bir gösterge. İbre, anlık açı
-  değerine göre hareket eder. Renk bölgeleri:
-  - 0°-30°: Kırmızı (aşırı fleksiyon)
-  - 30°-150°: Yeşil (normal hareket aralığı)
-  - 150°-180°: Mavi (tam ekstensiyon)
-- **Sayısal Açı Değeri**: Kadranın merkezinde büyük punto ile anlık açı
-  (ör. "87.3°").
-- **Bağlantı Durum Simgesi**: Sağ üst köşede Bluetooth bağlantı gücü
-  ve durumunu gösteren küçük ikon.
-- **Veri Alım Göstergesi**: Veri paketleri gelirken yanıp sönen küçük bir
-  LED benzeri nokta. Veri gelmezse sabit kırmızı.
-- **Min/Max Göstergesi**: Mevcut seansta kaydedilen minimum ve maksimum
-  açı değerleri.
-
-### Veri Akışı
-
-```
-Bluetooth SPP üzerinden veri alınır
-  → "A:<değer>,T:<zaman>" formatı ayrıştırılır
-  → Açı değeri kadran ibresi ve sayısal göstergeye yansıtılır
-  → Min/max değerler güncellenir
-  → Veri alım göstergesi yanıp söner
-  → 500 ms veri gelmezse bağlantı uyarısı gösterilir
-```
+### Key UI Elements
+- **Scan Button:** Initiates / terminates Bluetooth discovery.
+- **Discovered Device List:** Displays device names, MAC addresses, and RSSI signal indicators.
+- **Connection Status Banner:** Top status indicator (Red: Disconnected, Yellow: Connecting, Green: Connected).
+- **Permissions Warning:** Prompts for Bluetooth scanning and location runtime permissions if not granted.
 
 ---
 
-## 3. Kontrol Ekranı
+## 2. Live Dashboard Screen
 
-### Amaç
+### Objective
+Displays high-visibility real-time angular flexion telemetry for rapid field assessment.
 
-ESP32'ye uzaktan kalibrasyon, kayıt başlatma ve duraklatma komutları
-gönderilmesini sağlar. Aktif seans süresini takip eder.
-
-### Temel Arayüz Öğeleri
-
-- **Z Butonu (Sıfırla)**: Büyük, sarı renkli dairesel buton. Basıldığında
-  ESP32'ye "Z\n" komutu gönderir. Enkoderin mevcut pozisyonunu sıfır
-  olarak kalibre eder. Yanlışlıkla basmayı önlemek için basılı tutma
-  (1 saniye) gerektirir.
-- **S Butonu (Başlat)**: Büyük, yeşil renkli dairesel buton. "S\n" komutu
-  gönderir. Veri kaydını başlatır. Basıldığında seans zamanlayıcı çalışmaya
-  başlar.
-- **P Butonu (Duraklat)**: Büyük, kırmızı renkli dairesel buton. "P\n"
-  komutu gönderir. Veri kaydını duraklatır. Zamanlayıcı durur.
-- **Seans Zamanlayıcısı**: Kayıt başladığından bu yana geçen süreyi
-  "SS:DD:SN" formatında gösteren sayaç.
-- **Durum Metni**: Mevcut durumu belirten etiket ("Boşta", "Kayıt Yapılıyor",
-  "Duraklatıldı").
-
-### Veri Akışı
-
-```
-Kullanıcı bir butona basar
-  → İlgili komut dizesi ("Z\n", "S\n", "P\n") Bluetooth üzerinden gönderilir
-  → ESP32 komutu alır ve uygular
-  → ESP32 onay mesajı döndürür (opsiyonel)
-  → Uygulama durumu güncellenir (zamanlayıcı başla/dur)
-  → Kayıt modundaysa gelen açı verileri yerel depolamaya yazılır
-```
+### Key UI Elements
+- **Semicircular Dynamic Gauge (0°–150°):** Color-coded ranges:
+  - $0^\circ - 30^\circ$: Red / Warning (Hyperextension / Terminal Extension)
+  - $30^\circ - 120^\circ$: Green (Normal Functional Range of Motion)
+  - $120^\circ - 150^\circ$: Blue (Deep Flexion)
+- **Numerical Angle Readout:** Large digital display showing instantaneous angle to 1 decimal place (e.g. `87.4°`).
+- **Telemetry Health Indicators:** Live sample rate display (~50 Hz) and dropped packet counter.
+- **ROM Min / Max Trackers:** Displays minimum and maximum flexion angles recorded during the active session.
 
 ---
 
-## 4. Geçmiş Ekranı
+## 3. Remote Control Screen
 
-### Amaç
+### Objective
+Dispatches single-byte calibration and session recording commands to the ESP32 firmware.
 
-Daha önce kaydedilmiş ölçüm seanslarının listesini ve her seansın açı-zaman
-grafiğini görüntüler. Tedavi sürecindeki ilerlemenin takibine olanak tanır.
-
-### Temel Arayüz Öğeleri
-
-- **Seans Listesi**: Tarih ve saat, süre, ortalama açı bilgileriyle
-  kartlar halinde listelenen geçmiş seanslar. En yeni seans üstte.
-- **Seans Detay Kartı**: Bir seansa dokunulduğunda açılan genişletilmiş
-  görünüm:
-  - Açı-zaman çizgi grafiği (x ekseni: süre, y ekseni: açı)
-  - İstatistik özeti: ortalama, min, max, standart sapma
-  - ROM (Range of Motion) değeri: max - min farkı
-- **Dışa Aktar Butonu**: Seçili seansın verilerini CSV dosyası olarak
-  paylaşma/kaydetme seçeneği.
-- **Sil Butonu**: Seçili seansı silme (onay diyalogu ile).
-- **Filtre/Sıralama**: Tarihe veya süreye göre sıralama seçenekleri.
-
-### Veri Akışı
-
-```
-Ekran açılır
-  → Yerel depolamadan (SQLite veya dosya sistemi) seans listesi yüklenir
-  → Kartlar halinde listelenir
-  → Kullanıcı bir seansa dokunur
-  → İlgili seansın tüm veri noktaları yüklenir
-  → Açı-zaman grafiği çizilir ve istatistikler hesaplanır
-  → "Dışa Aktar" → CSV oluştur → Paylaşma menüsü aç
-```
+### Key UI Elements
+- **Zero Calibration Button (`'Z'`):** Orange button. Requires a 1-second press-and-hold to prevent accidental triggers. Transmits `'Z'` to set current posture as $0.0^\circ$.
+- **Start Recording Button (`'S'`):** Green button. Transmits `'S'` to initiate high-speed telemetry streaming and starts the session timer.
+- **Pause Recording Button (`'P'`):** Red button. Transmits `'P'` to halt transmission.
+- **Session Stopwatch:** Displays elapsed active capture time (`HH:MM:SS`).
 
 ---
 
-## 5. Ayarlar Ekranı
+## 4. Session History Screen
 
-### Amaç
+### Objective
+Stores and visualizes historical recording sessions cached locally on device storage.
 
-Uygulama genelindeki tercihlerin yapılandırılmasını sağlar. Bluetooth cihaz
-yönetimi, ölçüm birimi seçimi ve veri dışa aktarma seçenekleri bu ekrandan
-kontrol edilir.
-
-### Temel Arayüz Öğeleri
-
-- **Bluetooth Cihaz Tercihleri**:
-  - Varsayılan cihaz seçimi (daha önce bağlanılmış cihazlar listesi)
-  - Otomatik bağlanma açma/kapama anahtarı
-  - Bağlantı zaman aşımı süresi ayarı (5-30 saniye kaydırıcı)
-- **Ölçüm Birimi**:
-  - Açı birimi: Derece (°) veya Radyan (rad) seçim düğmesi
-  - (Gelecekte: Gonyometre referans düzlemi seçimi)
-- **Veri Yönetimi**:
-  - Tüm seansları dışa aktar (toplu CSV)
-  - Tüm verileri sil (onay diyalogu ile)
-  - Depolama kullanım bilgisi (kayıt sayısı, toplam boyut)
-- **Görüntüleme Tercihleri**:
-  - Kadran renk teması (standart / yüksek kontrast / karanlık)
-  - Ekran sönme engelleme açma/kapama
-- **Hakkında**:
-  - Uygulama sürüm numarası
-  - Proje bilgisi ve iletişim
-
-### Veri Akışı
-
-```
-Ekran açılır
-  → Mevcut tercihler yerel depolamadan (SharedPreferences / AsyncStorage) okunur
-  → Arayüz öğeleri mevcut değerlerle doldurulur
-  → Kullanıcı bir değer değiştirir
-  → Yeni değer anında yerel depolamaya yazılır
-  → İlgili uygulama davranışı güncellenir
-    (ör. birim değişikliği → kadran skalası yeniden çizilir)
-```
+### Key UI Elements
+- **Session List:** Chronological card list showing date, task type, duration, and peak Range of Motion (ROM).
+- **Session Detail View:**
+  - Angular trajectory vs. time line chart.
+  - Summary metrics: Mean angle, Peak angle, ROM ($\theta_{max} - \theta_{min}$).
+- **Export Action:** Exports session data in CSV format via the native OS share sheet.
 
 ---
 
-**Proje Ekibi**: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin
-**Akademik Danışman**: Prof. Dr. Erkan Zergeroglu
+## 5. Settings Screen
+
+### Objective
+Configures app preferences, units, connection timeouts, and storage management.
+
+### Key UI Elements
+- **Auto-Connect Toggle:** Automatically connects to the last paired device on launch.
+- **Unit Selector:** Toggle between Degrees (°) and Radians (rad).
+- **Storage Management:** Clear cached session logs and display local disk footprint.

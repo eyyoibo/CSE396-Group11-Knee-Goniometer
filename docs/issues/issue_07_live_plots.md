@@ -1,22 +1,22 @@
 ---
-title: "[M2] Gerçek Zamanli PyQtGraph Canli Grafikleri"
+title: "[M2] Real-Time Multi-Curve Visualization with PyQtGraph"
 labels: ["module-2", "software", "priority-medium"]
 milestone: "M2-Desktop MVP"
-assignees: ["Mert Canoglu"]
+assignees: ["Mert Canoglu", "Cansu Bulut"]
 ---
 
-## 📌 Is Tanimi
-PyQtGraph kutuphanesi kullanilarak, yuksek performansli 3 adet canli zaman serisi grafigi cizilecektir:
-1. **Aci - Zaman Grafigi ($\theta(t)$):** Sol diz enkoder acisi (mavi), sag diz enkoder acisi (yesil) ve kameraya yakin diz icin MediaPipe acisi (kirmizi kesikli).
-2. **Birikimli Sayim Grafigi ($N(t)$):** Sol ve sag enkoder birikimli darbe sayisi.
-3. **Ornekler Arasi Sayim Artisi ($\Delta N(t) = N(t) - N(t-1)$):** Anlik acisal hiz gostergesi.
+## 📌 Task Description
+Implement high-performance hardware-accelerated time-series plots using the PyQtGraph library to display three dynamic data streams:
+1. **Angle vs. Time ($\theta(t)$):** Left knee encoder angle (blue), right knee encoder angle (green), and MediaPipe vision angle for the active limb (dashed red).
+2. **Cumulative Count ($N(t)$):** Raw cumulative pulse counts from both encoders.
+3. **Inter-Sample Count Delta ($\Delta N(t) = N(t) - N(t-1)$):** Instantaneous angular velocity indicator.
 
-## 🎯 Kabul Kriterleri
-- [ ] PyQtGraph `PlotWidget` bilesenleri kullanilarak grafik guncellemeleri 30-50 FPS'te akici sekilde calismali.
-- [ ] X ekseninde kayan son 10 saniyelik zaman penceresi gosterilmeli; Y ekseni 0°-150° araliginda olceklenmeli.
-- [ ] Grafik cizimi veri alim thread'ini yavaslatmamali; `QTimer` ile ~30 Hz arayuz yenileme uygulanmali.
-- [ ] Eksen etiketleri, birimler ve gosterge (legend) alanlari anlasilir olmali.
+## 🎯 Acceptance Criteria
+- [ ] Embed PyQtGraph `PlotWidget` instances maintaining a smooth 30-50 FPS UI refresh rate.
+- [ ] Implement a trailing 10-second sliding time window on the X-axis; scale Y-axis from 0° to 150°.
+- [ ] Decouple rendering from data acquisition using a dedicated `QTimer` at ~30 Hz.
+- [ ] Include clear axis labels, physical units, dynamic legends, and grid lines.
 
-## 📋 Alt Gorevler
-- [ ] `main_window.py` icine 3 plot panelini yerlestir.
-- [ ] `update_plots()` metodunda dairesel tampon (circular buffer / deque) kullanarak veriyi ciz.
+## 📋 Subtasks
+- [ ] Embed 3 plot panels into the central area of `main_window.py`.
+- [ ] Implement circular buffers (`collections.deque`) in `update_plots()` for efficient O(1) appending and slicing.

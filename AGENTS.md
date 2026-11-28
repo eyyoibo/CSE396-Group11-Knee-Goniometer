@@ -1,122 +1,52 @@
 # Agent Instructions — Knee Goniometer & Pose Estimation
 
-## Repository Structure Overview
+## Repository Architecture & Guidelines for Autonomous AI Agents
 
-```
+This document defines architectural boundaries, coding standards, and operational invariants for AI coding assistants working in this repository.
+
+---
+
+## 1. Repository Structure Overview
+
+```text
 knee-goniometer-pose-estimation/
-├── m1-firmware/           # ESP32 firmware (ESP-IDF / C)
-│   ├── main/              # Application entry point and core logic
-│   ├── components/        # Reusable ESP-IDF components (encoder, bluetooth, packet)
-│   └── test/              # Firmware unit tests
-├── m2-desktop/            # Desktop GUI application (Python / PyQt6)
-│   ├── src/               # Application source code
-│   ├── tests/             # pytest test suite
-│   └── resources/         # UI assets, icons
-├── m3-camera/             # Camera-based pose estimation (Python / MediaPipe)
-│   ├── src/               # Pipeline source code
-│   ├── tests/             # pytest test suite
-│   └── models/            # Model configuration files
-├── m4-mobile/             # Mobile application (React Native)
-│   ├── src/               # App source code
-│   └── __tests__/         # Jest test suite
-├── shared/                # Cross-module shared utilities
-│   ├── packet_parser/     # 28-byte packet format parser (Python + C + JS)
-│   ├── synthetic_data/    # Test data generators
-│   └── protocols/         # Protocol documentation and constants
-├── docs/                  # Project documentation, reports, diagrams
-├── data/                  # Collected measurement data (gitignored except examples)
-└── scripts/               # Build, deploy, and utility scripts
+├── module1_hardware_encoder/      # ESP-IDF C firmware for ESP32 & PCNT hardware counter
+├── module2_interface_rmse/        # PyQt6 desktop GUI & real-time RMSE/MAE analytics engine
+├── module3_mediapipe_simulation/  # OpenCV + MediaPipe Pose pipeline & 2D kinematic simulation
+├── module4_mobile_app/            # React Native (Expo) companion mobile application
+├── shared/                        # Shared binary packet parser & synthetic stream generator
+├── tests/                         # Pytest automated test suite
+├── docs/                          # Technical protocols, screen flows, and issue catalog
+└── scripts/                       # Automation CLI scripts
 ```
 
-## Module Navigation
+---
 
-### M1 — Hardware & Firmware
-Entry point: `m1-firmware/main/app_main.c`
-The firmware reads two quadrature encoders via GPIO interrupts, computes knee angle in degrees, and packages data into a 28-byte binary packet. This packet is transmitted over Bluetooth Classic SPP (for desktop) and BLE GATT (for mobile). Key files:
-- `components/encoder/` — Quadrature encoder driver
-- `components/bluetooth/` — SPP and BLE GATT server implementation
-- `components/packet/` — Packet construction and CRC
+## 2. Team Information & Attribution Policy
 
-### M2 — Desktop GUI
-Entry point: `m2-desktop/src/main.py`
-A PyQt6 application that connects to the ESP32 via Bluetooth serial port. Displays real-time angle data on a scrolling chart, allows session recording to CSV, and provides calibration controls.
+* **Project Team Members:**
+  - İbrahim Halil Doğan
+  - Mert Canoğlu
+  - Cem Baygın
+  - Cansu Bulut
+* **CRITICAL INVARIANT:** Never add yourself, automated agents, or AI tool names as an author, co-author, contributor, or copyright holder anywhere in commits, docstrings, or repository files. All contributions are credited strictly to the human project team.
 
-### M3 — Camera Pipeline
-Entry point: `m3-camera/src/main.py`
-Uses OpenCV to capture video frames and MediaPipe Pose to detect body landmarks. Calculates knee flexion/extension angle from hip-knee-ankle landmark positions. Can run standalone or be embedded into the M2 desktop GUI for side-by-side comparison.
+---
 
-### M4 — Mobile App
-Entry point: `m4-mobile/src/App.tsx`
-A React Native app that connects to the ESP32 via BLE. Displays real-time angle readings and session history. Designed for clinical portability.
+## 3. Module Boundaries & Invariants
 
-## Key Data Flow
+Each module is strictly encapsulated:
+* **Module 1 (Firmware):** Does not import or depend on Python code. Must output fixed 28-byte binary packets matching `telemetry_packet.h`.
+* **Module 2 (Desktop):** Consumes telemetry packets via `shared/packet_parser.py`. Must run non-blocking serial reading in a dedicated `QThread`.
+* **Module 3 (Vision):** Encapsulates all OpenCV and MediaPipe dependencies. Must produce filtered angles and landmark visibility scores. Does not directly handle Bluetooth connections.
+* **Module 4 (Mobile):** Encapsulates mobile TypeScript / React Native code. Communicates with ESP32 via Bluetooth SPP / BLE.
+* **Shared:** Contains cross-module utilities (e.g., `packet_parser.py`, `synthetic_data_generator.py`). Any change to the 28-byte packet structure must be reflected in `shared/` and all consuming modules.
 
-```
-                    ┌──────────────┐
-                    │   Encoders   │
-                    │  (Hardware)  │
-                    └──────┬───────┘
-                           │ GPIO interrupts
-                    ┌──────▼───────┐
-                    │    ESP32     │
-                    │  (Firmware)  │
-                    └──┬───────┬───┘
-          Bluetooth SPP│       │BLE GATT
-                 ┌─────▼──┐  ┌─▼────────┐
-                 │Desktop │  │  Mobile   │
-                 │  GUI   │  │   App     │
-                 │ (PyQt) │  │(React N.) │
-                 └────────┘  └──────────┘
+---
 
-      ┌────────────┐
-      │   Camera   │
-      └─────┬──────┘
-            │ Video frames
-      ┌─────▼──────┐
-      │ MediaPipe  │
-      │   Pose     │
-      └─────┬──────┘
-            │ Landmark coordinates
-      ┌─────▼──────┐
-      │   Angle    │
-      │ Calculator │
-      └────────────┘
-```
+## 4. Code Standards & Language Policy
 
-Both data streams (encoder angle + camera angle) are timestamped and merged in the desktop GUI for comparison analysis.
-
-## Development Workflow
-
-### Branch Naming
-- `feature/m1/encoder-driver` — New feature for Module 1
-- `fix/m2/chart-rendering` — Bug fix for Module 2
-- `docs/architecture-update` — Documentation changes
-- `test/m3/angle-calculation` — Adding tests for Module 3
-
-### Commit Message Convention
-Prefix every commit with the module tag:
-- `[M1] Encoder sürücüsü GPIO kesme yapılandırması eklendi`
-- `[M2] Gerçek zamanlı grafik performansı iyileştirildi`
-- `[M3] MediaPipe landmark tespiti doğruluğu artırıldı`
-- `[M4] BLE bağlantı yönetimi düzeltildi`
-- `[SHARED] Paket ayrıştırıcı CRC doğrulaması eklendi`
-- `[DOCS] Mimari diyagramı güncellendi`
-
-## Testing Strategy
-
-| Module | Framework | Focus Areas |
-|--------|-----------|-------------|
-| M1 | Unity (C) + synthetic serial | Encoder reading accuracy, packet integrity, CRC validation |
-| M2 | pytest | Bluetooth data parsing, CSV export, GUI state management |
-| M3 | pytest | Angle calculation accuracy, landmark detection edge cases |
-| M4 | Jest + React Native Testing Library | BLE connection handling, component rendering |
-| Shared | pytest + Jest | Packet parser consistency across languages |
-
-Use the synthetic data generator in `shared/synthetic_data/` to test without hardware. It produces realistic 28-byte packets with configurable angle sequences.
-
-## Important Reminders
-
-- Do NOT add yourself or any AI tool as a contributor to this project
-- The project team is: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin
-- Academic advisor: Prof. Dr. Erkan Zergeroglu
-- Keep module boundaries clean — shared code goes in `shared/`
+* **Language:** All code identifiers, docstrings, comments, commit messages, and documentation must be written in **English**.
+* **Python:** Follow PEP 8 strictly. Type hints are mandatory on all public function and method signatures.
+* **C:** Follow Espressif ESP-IDF guidelines. Snake_case naming, clean header guards, and packed structs.
+* **Scaffolding Policy:** When creating drafts or skeletons, provide complete typed signatures, comprehensive docstrings, mathematical formulas, and actionable TODO comments without committing fake or broken production code.

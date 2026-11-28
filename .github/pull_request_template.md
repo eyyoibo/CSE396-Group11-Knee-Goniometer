@@ -1,40 +1,33 @@
-## Değişiklik Özeti
+## Summary of Changes
+Provide a brief summary of the changes introduced by this pull request.
 
-Bu PR ile yapılan değişiklikleri kısaca açıklayın.
-
-## İlgili Issue
-
+## Related Issue
 Closes #
 
-## Değişiklik Türü
+## Type of Change
+- [ ] Bug fix (non-breaking change which fixes an issue)
+- [ ] New feature (non-breaking change which adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Documentation update
+- [ ] Refactoring (code improvements without functional changes)
+- [ ] Testing (adding missing tests or updating existing tests)
+- [ ] Build / CI configuration change
 
-- [ ] Hata düzeltmesi (mevcut işlevselliği bozmayan değişiklik)
-- [ ] Yeni özellik (mevcut işlevselliği bozmayan yeni ekleme)
-- [ ] Kırıcı değişiklik (mevcut işlevselliği etkileyen düzeltme veya özellik)
-- [ ] Dokümantasyon güncellemesi
-- [ ] Yeniden düzenleme (refactoring)
-- [ ] Test ekleme veya güncelleme
-- [ ] Yapılandırma / derleme değişikliği
+## Verification & Testing Performed
+Describe the tests you ran to verify your changes:
+- [ ] Unit tests (`pytest tests/ -v`)
+- [ ] Flake8 style & syntax check (`flake8 .`)
+- [ ] Manual hardware / stream verification (describe steps below)
 
-## Yapılan Testler
-
-Bu değişiklikleri doğrulamak için hangi testleri çalıştırdınız?
-
-- [ ] Birim testleri
-- [ ] Entegrasyon testleri
-- [ ] Manuel test (adımları aşağıda açıklayın)
-
-**Manuel test adımları:**
-
+**Manual Testing Steps:**
 1. ...
 2. ...
 
-## Kontrol Listesi
-
-- [ ] Kodum projenin stil kurallarına uyuyor
-- [ ] Kendi kodumu gözden geçirdim
-- [ ] Gerekli yerlere yorum ekledim
-- [ ] Dokümantasyonu güncelledim (gerekiyorsa)
-- [ ] Değişikliklerim yeni uyarı üretmiyor
-- [ ] Testler eklendi ve mevcut testler geçiyor
-- [ ] Bağımlı değişiklikler birleştirildi ve yayınlandı
+## PR Checklist
+- [ ] My code conforms to the project's coding standards (PEP 8 for Python, ESP-IDF for C).
+- [ ] I have performed a self-review of my own code.
+- [ ] I have commented my code, particularly in hard-to-understand areas.
+- [ ] I have updated corresponding documentation where applicable.
+- [ ] My changes generate no new warnings or lint errors.
+- [ ] I have added tests that prove my fix is effective or that my feature works.
+- [ ] No AI tools or assistants are listed as author/contributor in git commits or code headers.

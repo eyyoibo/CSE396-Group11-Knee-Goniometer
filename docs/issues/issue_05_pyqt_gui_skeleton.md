@@ -1,19 +1,19 @@
 ---
-title: "[M2] PyQt6 Masaüstü Arayüz Iskeleti ve Panel Düzeni"
+title: "[M2] PyQt6 Desktop Dashboard Architecture and Layout Skeleton"
 labels: ["module-2", "software", "priority-high"]
 milestone: "M2-Desktop MVP"
-assignees: ["Mert Canoglu", "Ibrahim Halil Dogan"]
+assignees: ["Cem Baygin", "Cansu Bulut"]
 ---
 
-## 📌 Is Tanimi
-Masaustunde calisacak Python PyQt6 tabanli kullanici arayuzunun (GUI) ana pencere duzeni kurulacaktir. Arayuz; sol tarafta baglanti ve oturum kontrollerini, ortada canli grafikleri, sag tarafta ise anlik hata metriklerini (RMSE/MAE) ve kamera goruntusunu barindiracaktir.
+## 📌 Task Description
+Construct the Python PyQt6 desktop user interface architecture and layout. The dashboard organizes connection and session controls on the left, real-time synchronized time-series plots in the center, and live error metrics (RMSE/MAE) and camera feed display on the right.
 
-## 🎯 Kabul Kriterleri
-- [ ] `QMainWindow` temelinde responsive ve modern karanlik tema (Dark Theme) stili olusturulmali.
-- [ ] Ust Arac Cubugu (Toolbar): Port secim kutusu (COM port / RFCOMM), "Baglan/Kes", "Sifirla [Z]", "Baslat [S]", "Durdur [P]", "CSV Disa Aktar" butonlari yer almali.
-- [ ] Klavye kisayollari ('Z', 'S', 'P') tanimlanmali.
-- [ ] Durum cubugunda (StatusBar): Baglanti durumu, anlik paket hizi (Hz), oturum suresi ve dosya yazma durumu goruntulenmeli.
+## 🎯 Acceptance Criteria
+- [ ] Implement responsive dark-theme stylesheet on top of `QMainWindow`.
+- [ ] Top Toolbar: Serial port dropdown (COM port / RFCOMM device), "Connect/Disconnect", "Zero [Z]", "Start [S]", "Pause [P]", and "Export CSV" actions.
+- [ ] Global keyboard shortcuts mapped to 'Z', 'S', and 'P'.
+- [ ] Status Bar: Connection status indicator, instantaneous packet throughput (Hz), elapsed session timer, and disk logging indicator.
 
-## 📋 Alt Gorevler
-- [ ] `module2_interface_rmse/src/main_window.py` sinifinin `init_ui()` fonksiyonunu tamamla.
-- [ ] Qt sinyalleri ile butonlarin arkasindaki islevleri (slot) bagla.
+## 📋 Subtasks
+- [ ] Implement `init_ui()` layout and widget composition in `module2_interface_rmse/src/main_window.py`.
+- [ ] Connect Qt signals and slots for control buttons and status updates.

@@ -1,86 +1,74 @@
-# Kablolama Şeması
+# Hardware Wiring Guide
 
-> Diz Gonyometresi — Enkoder, Diferansiyel Alıcı ve ESP32 Bağlantıları
+> Dual-Encoder Knee Goniometer — Rotary Encoders, Differential Receivers & ESP32 Pinout
 
-## Genel Bilgi
+## 1. Overview
 
-Enkoderlerin diferansiyel çıkışları (A+/A-, B+/B-) doğrudan ESP32'ye bağlanamaz. AM26C32 diferansiyel hat alıcı IC kullanılarak sinyaller 3.3V TTL seviyesine dönüştürülür. Her enkoder için bir adet AM26C32 kullanılır (toplam 2 adet).
+The incremental optical/magnetic encoders output high-speed differential RS-422 pairs ($A, \bar{A}, B, \bar{B}$) which cannot be directly connected to the ESP32 GPIOs. An AM26C32 quad differential line receiver IC converts these complementary signals to single-ended 3.3V TTL/CMOS logic levels for the ESP32 hardware Pulse Counter (PCNT) peripherals.
 
-## Enkoder → AM26C32 Bağlantıları
+---
 
-### Sol Enkoder (Enkoder 1)
+## 2. Encoder $\rightarrow$ AM26C32 Pinout
 
-| Enkoder Pini | Sinyal | AM26C32 #1 Pini | AM26C32 Fonksiyonu |
+### Left Knee Encoder (Encoder 1)
+
+| Encoder Lead | Signal | AM26C32 #1 Pin | Receiver Function |
 |---|---|---|---|
-| A+ | Kanal A pozitif | 1A (Pin 1) | Alıcı 1 pozitif giriş |
-| A- | Kanal A negatif | 1B (Pin 2) | Alıcı 1 negatif giriş |
-| B+ | Kanal B pozitif | 2A (Pin 4) | Alıcı 2 pozitif giriş |
-| B- | Kanal B negatif | 2B (Pin 5) | Alıcı 2 negatif giriş |
-| VCC | Enkoder besleme | — | 5V regülatör çıkışı |
-| GND | Toprak | — | Ortak toprak |
+| **A+** | Channel A (+) | Pin 1 (1A) | Receiver 1 Non-Inverting Input |
+| **A-** | Channel A (-) | Pin 2 (1B) | Receiver 1 Inverting Input |
+| **B+** | Channel B (+) | Pin 4 (2A) | Receiver 2 Non-Inverting Input |
+| **B-** | Channel B (-) | Pin 5 (2B) | Receiver 2 Inverting Input |
+| **VCC** | Encoder Supply | — | +5V Regulated Rail |
+| **GND** | System Ground | — | Common Ground Rail |
 
-### Sağ Enkoder (Enkoder 2)
+### Right Knee Encoder (Encoder 2)
 
-| Enkoder Pini | Sinyal | AM26C32 #2 Pini | AM26C32 Fonksiyonu |
+| Encoder Lead | Signal | AM26C32 #2 Pin | Receiver Function |
 |---|---|---|---|
-| A+ | Kanal A pozitif | 1A (Pin 1) | Alıcı 1 pozitif giriş |
-| A- | Kanal A negatif | 1B (Pin 2) | Alıcı 1 negatif giriş |
-| B+ | Kanal B pozitif | 2A (Pin 4) | Alıcı 2 pozitif giriş |
-| B- | Kanal B negatif | 2B (Pin 5) | Alıcı 2 negatif giriş |
-| VCC | Enkoder besleme | — | 5V regülatör çıkışı |
-| GND | Toprak | — | Ortak toprak |
+| **A+** | Channel A (+) | Pin 1 (1A) | Receiver 1 Non-Inverting Input |
+| **A-** | Channel A (-) | Pin 2 (1B) | Receiver 1 Inverting Input |
+| **B+** | Channel B (+) | Pin 4 (2A) | Receiver 2 Non-Inverting Input |
+| **B-** | Channel B (-) | Pin 5 (2B) | Receiver 2 Inverting Input |
+| **VCC** | Encoder Supply | — | +5V Regulated Rail |
+| **GND** | System Ground | — | Common Ground Rail |
 
-## AM26C32 → ESP32 Bağlantıları
+---
 
-### AM26C32 #1 (Sol Enkoder) → ESP32
+## 3. AM26C32 $\rightarrow$ ESP32 GPIO Connections
 
-| AM26C32 #1 Pini | Fonksiyon | ESP32 GPIO | PCNT Birimi |
+### AM26C32 #1 (Left Knee) $\rightarrow$ ESP32
+
+| AM26C32 #1 Pin | Signal | ESP32 GPIO | PCNT Peripheral Channel |
 |---|---|---|---|
-| 1Y (Pin 3) | Kanal A TTL çıkışı | GPIO 34 | PCNT 0 — SIG |
-| 2Y (Pin 6) | Kanal B TTL çıkışı | GPIO 35 | PCNT 0 — CTRL |
+| **Pin 3 (1Y)** | Channel A TTL | GPIO 34 | PCNT Unit 0 — Pulse / SIG |
+| **Pin 6 (2Y)** | Channel B TTL | GPIO 35 | PCNT Unit 0 — Direction / CTRL |
 
-### AM26C32 #2 (Sağ Enkoder) → ESP32
+### AM26C32 #2 (Right Knee) $\rightarrow$ ESP32
 
-| AM26C32 #2 Pini | Fonksiyon | ESP32 GPIO | PCNT Birimi |
+| AM26C32 #2 Pin | Signal | ESP32 GPIO | PCNT Peripheral Channel |
 |---|---|---|---|
-| 1Y (Pin 3) | Kanal A TTL çıkışı | GPIO 32 | PCNT 1 — SIG |
-| 2Y (Pin 6) | Kanal B TTL çıkışı | GPIO 33 | PCNT 1 — CTRL |
+| **Pin 3 (1Y)** | Channel A TTL | GPIO 32 | PCNT Unit 1 — Pulse / SIG |
+| **Pin 6 (2Y)** | Channel B TTL | GPIO 33 | PCNT Unit 1 — Direction / CTRL |
 
-## AM26C32 Güç ve Etkinleştirme Bağlantıları
+---
 
-Her iki AM26C32 IC için aynı bağlantılar uygulanır:
+## 4. Power & Enable Configuration
 
-| AM26C32 Pini | Fonksiyon | Bağlantı |
+Both AM26C32 ICs are configured identically:
+
+| AM26C32 Pin | Function | Connection |
 |---|---|---|
-| VCC (Pin 16) | IC besleme | 3.3V (ESP32 3V3 pini) |
-| GND (Pin 8) | Toprak | Ortak GND |
-| 1EN (Pin 14) | Alıcı 1 etkinleştirme | GND (aktif düşük, daima etkin) |
-| 2EN (Pin 11) | Alıcı 2 etkinleştirme | GND (aktif düşük, daima etkin) |
+| **Pin 16 (VCC)** | Supply Voltage | +3.3V (from ESP32 3V3 pin) |
+| **Pin 8 (GND)** | Ground | Common Ground |
+| **Pin 14 (1EN)**| Enable 1 | GND (Active-low, permanently enabled) |
+| **Pin 11 (2EN)**| Enable 2 | GND (Active-low, permanently enabled) |
 
-> **Not:** Kullanılmayan alıcı girişleri (3A/3B, 4A/4B) boşta bırakılabilir. Enable pinleri (3EN, 4EN) VCC'ye bağlanarak devre dışı tutulmalıdır.
+> **Note:** Unused receiver channels (3A/3B, 4A/4B) should have their enable pins disabled to reduce power consumption.
 
-## Güç Dağıtımı
+---
 
-| Kaynak | Hedef | Gerilim | Açıklama |
-|---|---|---|---|
-| USB / LiPo batarya | AMS1117-5.0 girişi | 7-12V | Ham güç kaynağı |
-| AMS1117-5.0 çıkışı | Enkoder VCC (x2) | 5V | Enkoder besleme |
-| ESP32 3V3 pini | AM26C32 VCC (x2) | 3.3V | IC besleme |
-| Ortak GND | Tüm bileşenler | 0V | Ortak referans |
+## 5. Decoupling & Signal Integrity
 
-## Dekuplaj Kapasitörleri
-
-Her güç pinine mümkün olduğunca yakın yerleştirilmelidir:
-
-| Konum | Kapasitör |
-|---|---|
-| AM26C32 #1 — VCC-GND arası | 100nF seramik |
-| AM26C32 #2 — VCC-GND arası | 100nF seramik |
-| AMS1117-5.0 girişi | 10µF elektrolitik |
-| AMS1117-5.0 çıkışı | 10µF elektrolitik + 100nF seramik |
-
-## Önemli Notlar
-
-- GPIO 34 ve GPIO 35 yalnızca giriş olarak kullanılabilir (dahili pull-up yoktur). Harici pull-up gerekmez çünkü AM26C32 çıkışları aktif sürücülüdür.
-- Kablo uzunluğu 2 metreyi geçerse, diferansiyel hat sonlandırma dirençleri (120Ω) eklenmelidir.
-- Tüm GND bağlantıları tek bir noktada birleştirilmeli (yıldız topraklama) ve toprak döngüsünden kaçınılmalıdır.
+* Place 100 nF ceramic capacitors directly between VCC and GND pins of each AM26C32.
+* Use $120\,\Omega$ parallel termination resistors between $A$ and $\bar{A}$, as well as $B$ and $\bar{B}$ if cables exceed 1.5 meters.
+* Employ star grounding to avoid ground loops between the battery, ESP32, and encoder shields.

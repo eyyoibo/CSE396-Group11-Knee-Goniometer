@@ -1,20 +1,20 @@
 ---
-title: "[M2] Senkronize Çok Sütunlu CSV Veri Kayit Sistemi"
+title: "[M2] Synchronized Multi-Column CSV Data Logging Subsystem"
 labels: ["module-2", "software", "priority-medium"]
 milestone: "M2-Desktop MVP"
-assignees: ["Ibrahim Halil Dogan"]
+assignees: ["Cansu Bulut", "Ibrahim Halil Dogan"]
 ---
 
-## 📌 Is Tanimi
-Masaustu uygulamasinda 'S' (Start) ile baslatilip 'P' (Pause) ile durdurulan her olcum oturumu; anlik zaman damgalari, ham enkoder sayimlari, hesaplanan acilar, MediaPipe landmark koordinatlari ve gorunurluk skorlarini iceren standart bir CSV dosyasina yazilacaktir.
+## 📌 Task Description
+Implement a robust multi-channel CSV logger that records synchronized timestamps, raw encoder counts, computed angles, MediaPipe landmark coordinates, and confidence scores for every session bounded by 'S' (Start) and 'P' (Pause) commands.
 
-## 🎯 Kabul Kriterleri
-- [ ] Dosya isimlendirme sablonu: `session_YYYYMMDD_HHMMSS_<KatilimciKodu>_<Gorev>.csv`
-- [ ] Sutun basliklari:
+## 🎯 Acceptance Criteria
+- [ ] File naming standard: `session_YYYYMMDD_HHMMSS_<SubjectID>_<Task>.csv`.
+- [ ] Required CSV header columns:
   `timestamp_ms, seq_num, enc_left_count, enc_right_count, enc_left_deg, enc_right_deg, cam_deg, cam_visibility, valid_flag`
-- [ ] Disk yazma islemi arayuzu kilitmemek icin tamponlu (buffered writing) ve periyodik flush ile yapilmali.
-- [ ] 'P' komutuna basildiginda veya uygulama kapatildiginda tum tampon diske bosaltilip dosya temiz kapatilmali.
+- [ ] Buffered non-blocking disk I/O with periodic flush intervals to avoid GUI thread latency.
+- [ ] Automatically flush remaining buffer and close file cleanly on 'P' command or application shutdown.
 
-## 📋 Alt Gorevler
-- [ ] `module2_interface_rmse/src/csv_logger.py` sinifini tamamla.
-- [ ] Örnek CSV dosyasini olusturup `shared/sample_session.csv` referansiyla karsilastir.
+## 📋 Subtasks
+- [ ] Implement `CsvLogger` class in `module2_interface_rmse/src/csv_logger.py`.
+- [ ] Validate output format against reference specification in `shared/sample_session.csv`.

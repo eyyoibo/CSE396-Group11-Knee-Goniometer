@@ -1,84 +1,79 @@
 """
-Analiz Motoru (AnalysisEngine) Birim Testleri
+Unit Tests for AnalysisEngine
 
-Kayan pencere RMSE/MAE hesaplamasi ve Bland-Altman istatistiklerini test eder.
+Tests sliding window RMSE/MAE discrepancy calculation and Bland-Altman statistical analysis.
 """
 
 import pytest
 import numpy as np
 
-# TODO: module2 import edildikten sonra aktif et
-# from module2_interface_rmse.src.analysis_engine import AnalysisEngine
-
 
 class TestAnalysisEngine:
-    """AnalysisEngine sinifi icin test senaryolari."""
+    """Test suite for AnalysisEngine class."""
 
     def setup_method(self):
-        """Her test oncesi analiz motoru olustur."""
+        """Initialize analysis engine instance before each test."""
         # TODO: engine = AnalysisEngine()
         pass
 
     def test_rmse_identical_signals_is_zero(self):
         """
-        Ayni iki sinyal arasindaki RMSE degerinin sifir oldugunu dogrular.
+        Verify that RMSE between identical sensor and camera streams is 0.0.
 
         TODO:
-            - Ayni aci dizisini hem enkoder hem kamera olarak ver
-            - RMSE sonucunun 0.0 oldugunu kontrol et
+            - Provide identical angle arrays
+            - Assert calculated RMSE equals 0.0
         """
         pass
 
     def test_rmse_known_offset(self):
         """
-        Sabit ofsetli iki sinyal arasindaki RMSE degerini dogrular.
+        Verify that a constant bias offset yields an identical RMSE value.
 
         TODO:
-            - Birbirine 5 derece sabit ofsetli iki sinyal olustur
-            - RMSE sonucunun 5.0 oldugunu kontrol et
+            - Provide two streams with constant 5.0 degree offset
+            - Assert RMSE equals 5.0 +/- 0.001
         """
         pass
 
     def test_mae_known_values(self):
         """
-        Bilinen degerlerle MAE hesabini dogrular.
+        Verify Mean Absolute Error against known analytical values.
 
         TODO:
-            - Enkoder: [10, 20, 30], Kamera: [12, 18, 33]
-            - MAE = mean(|2| + |2| + |3|) = 7/3 = 2.333...
-            - Sonucun beklenen degere yakin oldugunu kontrol et
+            - Encoder: [10, 20, 30], Camera: [12, 18, 33]
+            - Expected MAE = (|2| + |2| + |3|) / 3 = 7/3 = 2.333 deg
+            - Assert calculated MAE is within 0.001 of 2.333
         """
         pass
 
     def test_sliding_window_updates(self):
         """
-        Kayan pencerenin yeni veri geldikce guncellendisini dogrular.
+        Verify that the 5-second sliding window updates properly as new samples arrive.
 
         TODO:
-            - 10 saniyelik veri dizisi olustur
-            - 5 saniyelik pencere ile RMSE hesapla
-            - Pencerenin son 5 saniyeyi kullandigini kontrol et
+            - Feed 10 seconds of simulated stream data
+            - Ensure only samples within the trailing 5-second window are included in computation
         """
         pass
 
     def test_bland_altman_no_bias(self):
         """
-        Sapmasiz iki sinyal icin Bland-Altman bias degerinin sifira
-        yakin oldugunu dogrular.
+        Verify that zero-mean symmetric noise produces near-zero mean bias in Bland-Altman analysis.
 
         TODO:
-            - Rastgele gurultu ekli ama ortalama farki sifir olan iki sinyal olustur
-            - Bland-Altman bias degerinin 0'a yakin oldugunu kontrol et
+            - Feed two zero-mean perturbed signals
+            - Assert mean bias is within +/- 0.1 deg
         """
         pass
 
     def test_bland_altman_with_known_bias(self):
         """
-        Bilinen sabit sapma icin Bland-Altman sonuclarini dogrular.
+        Verify that a constant 3.0 degree offset produces 3.0 mean bias and expected limits of agreement.
 
         TODO:
-            - Birbirine 3 derece sabit ofsetli iki sinyal olustur
-            - Bias degerinin 3.0'a yakin oldugunu kontrol et
-            - Limits of agreement degerlerini kontrol et
+            - Feed signals with 3.0 degree constant offset
+            - Assert mean bias is 3.0 deg
+            - Assert upper/lower limits of agreement match bias +/- 1.96 * SD
         """
         pass

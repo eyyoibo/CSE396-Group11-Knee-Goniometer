@@ -1,19 +1,19 @@
 ---
-title: "[Shared] Donanimsiz Test için Sentetik Telemetri Paketi Üreteci"
+title: "[Shared] Synthetic Telemetry Data Generator for Hardware-Free Testing"
 labels: ["testing", "software", "priority-high"]
 milestone: "M2-Desktop MVP"
-assignees: ["Ibrahim Halil Dogan", "Mert Canoglu"]
+assignees: ["Cansu Bulut", "Mert Canoglu"]
 ---
 
-## 📌 Is Tanimi
-Fiziksel ESP32 donanimi ve enkoderler henuz tezgâhta lehimlenirken veya hazir degilken; Modül 2 (masaustu GUI) ve Modül 3 (zaman eslestirme) gelistirmelerinin aksamamasi icin gercekci diz fleksiyonu (squat) hareketini simule eden sentetik paket ureteci gelistirilecektir.
+## 📌 Task Description
+Enable parallel development and automated integration testing of Module 2 (Desktop Interface) and Module 3 (Temporal Synchronization) before physical ESP32 hardware and sensor harnesses are assembled, by developing a realistic synthetic telemetry packet generator mimicking knee flexion squat patterns.
 
-## 🎯 Kabul Kriterleri
-- [ ] Parametreler: Paket frekansi (50 Hz), hareket periyodu (or. 2 sn periyotlu 0°-90° squat sinus egrisi), gaussyen gurultu ($\sigma = 0.3^\circ$).
-- [ ] Cikti: Tam 28 baytlik ikili paket (`0xAA 0x55`, artan sira no, ms zaman damgasi, sol/sag sayim, sol/sag aci, CRC16).
-- [ ] Iletim Kanali: Sanal seri port (Windows com0com / Linux pty) veya yerel TCP soket (127.0.0.1:9000).
-- [ ] Donanim olmadan masaustu uygulamasinin acilip tum grafiklerin ve RMSE hesaplamasinin sentetik veriyle dogrulanabilmesi.
+## 🎯 Acceptance Criteria
+- [ ] Configurable parameters: packet frequency (50 Hz), motion cycle frequency (e.g. 2s period 0°-90° squat sinusoid), and Gaussian noise ($\sigma = 0.3^\circ$).
+- [ ] Output format: Exactly matches 28-byte firmware binary protocol (`0xAA 0x55`, incremental sequence ID, timestamp ms, left/right count, left/right angle, CRC16).
+- [ ] Transport interfaces: Virtual serial port (COM / pty) and local TCP server (`127.0.0.1:9000`).
+- [ ] Verify that desktop dashboard launches, receives synthetic packets, plots multi-curves, and calculates sliding RMSE without physical hardware connected.
 
-## 📋 Alt Gorevler
-- [ ] `shared/synthetic_data_generator.py` icindeki `generate_angle`, `build_packet` ve `run_serial` fonksiyonlarini tamamla.
-- [ ] `shared/packet_parser.py` ile entegrasyon testini yap.
+## 📋 Subtasks
+- [ ] Implement `generate_angle()`, `build_packet()`, and `run_serial()` in `shared/synthetic_data_generator.py`.
+- [ ] Execute automated integration test with `shared/packet_parser.py`.

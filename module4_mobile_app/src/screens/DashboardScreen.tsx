@@ -1,55 +1,47 @@
 /**
  * @file DashboardScreen.tsx
- * @brief Canli Aci Gostergeleri ve Grafik Ekrani
+ * @brief Live Angular Waveform & Dial Gauge Dashboard Screen
  *
- * Proje Ekibi: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin
- * Akademik Danisman: Prof. Dr. Erkan Zergeroglu
+ * Project Team: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin, Cansu Bulut
  */
 
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, ScrollView } from 'react-native';
-
-// TODO: AngleGauge bilesenini import et
-// import { AngleGauge } from '../components/AngleGauge';
 
 export const DashboardScreen: React.FC = () => {
   const [leftAngle, setLeftAngle] = useState<number>(0.0);
   const [rightAngle, setRightAngle] = useState<number>(0.0);
   const [packetRate, setPacketRate] = useState<number>(50);
 
-  // TODO: BluetoothService veri dinleyicisine abone ol
-  // TODO: Her yeni pakette sol/sag aci state'lerini guncelle
-  // TODO: Min/Maks aci araligini (ROM) seans suresince hesapla
-
   return (
     <ScrollView style={styles.container}>
+      {/* Top Metric Cards */}
       <View style={styles.metricsRow}>
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>SOL DIZ</Text>
+          <Text style={styles.cardTitle}>LEFT KNEE</Text>
           <Text style={styles.angleValue}>{leftAngle.toFixed(1)}°</Text>
-          <Text style={styles.cardSubtitle}>Enkoder Aci</Text>
+          <Text style={styles.cardSubtitle}>Encoder Flexion</Text>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>SAG DIZ</Text>
+          <Text style={styles.cardTitle}>RIGHT KNEE</Text>
           <Text style={styles.angleValue}>{rightAngle.toFixed(1)}°</Text>
-          <Text style={styles.cardSubtitle}>Enkoder Aci</Text>
+          <Text style={styles.cardSubtitle}>Encoder Flexion</Text>
         </View>
       </View>
 
-      {/* Kadran Gosterge Alani */}
+      {/* Semicircular Dynamic Gauge Container */}
       <View style={styles.gaugeContainer}>
-        <Text style={styles.gaugeHeader}>Canli Aci Kadran (0° - 150°)</Text>
-        {/* TODO: <AngleGauge angle={leftAngle} label="Sol Bacak" /> */}
+        <Text style={styles.gaugeHeader}>Real-Time Angular Gauge (0° - 150°)</Text>
         <View style={styles.gaugeMock}>
-          <Text style={styles.mockText}>[AngleGauge SVG Bileseni: {leftAngle.toFixed(1)}°]</Text>
+          <Text style={styles.mockText}>[AngleGauge SVG Dial: {leftAngle.toFixed(1)}°]</Text>
         </View>
       </View>
 
-      {/* Akis Durumu */}
+      {/* Stream Diagnostics Footer */}
       <View style={styles.footerInfo}>
-        <Text style={styles.infoText}>Veri Hizi: {packetRate} Hz (Hedef: 50 Hz)</Text>
-        <Text style={styles.infoText}>Paket Kaybi: %0.0</Text>
+        <Text style={styles.infoText}>Stream Rate: {packetRate} Hz (Nominal: 50 Hz)</Text>
+        <Text style={styles.infoText}>Packet Loss: 0.0%</Text>
       </View>
     </ScrollView>
   );

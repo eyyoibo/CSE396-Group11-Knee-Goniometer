@@ -1,9 +1,8 @@
 /**
  * @file BluetoothService.ts
- * @brief ESP32 Bluetooth Classic SPP ve BLE Baglanti Yonetimi Servisi
+ * @brief Bluetooth Classic SPP & BLE Service Management
  *
- * Proje Ekibi: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin
- * Akademik Danisman: Prof. Dr. Erkan Zergeroglu
+ * Project Team: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin, Cansu Bulut
  */
 
 export interface TelemetryData {
@@ -32,59 +31,53 @@ export class BluetoothService {
   }
 
   /**
-   * Yakindaki Bluetooth cihazlarini tara.
-   * TODO: react-native-bluetooth-classic scanDevices metodunu cagir
+   * Scans for nearby Bluetooth devices advertising SPP services.
    */
   public async scanDevices(): Promise<any[]> {
-    // TODO: Bluetooth izinlerini kontrol et (ACCESS_FINE_LOCATION, BLUETOOTH_SCAN)
-    // TODO: Bulunan cihaz listesini filtrele (ESP32 iceren cihazlar oncelikli)
-    throw new Error('scanDevices() henuz uygulanmadi.');
+    // TODO: Request runtime permissions (BLUETOOTH_SCAN, ACCESS_FINE_LOCATION)
+    // TODO: Call react-native-bluetooth-classic.startDiscovery()
+    throw new Error('scanDevices() not yet implemented.');
   }
 
   /**
-   * Belirtilen ESP32 cihazina baglan.
-   * TODO: SPP / RFCOMM soketi ac
+   * Establishes RFCOMM socket connection with selected ESP32 device.
    */
   public async connect(deviceAddress: string): Promise<boolean> {
-    // TODO: baglanti durumunu 'CONNECTING' yap
-    // TODO: soket baglantisini gerceklestir
-    // TODO: basarili olursa veri dinleyicisini baslat
-    throw new Error('connect() henuz uygulanmadi.');
+    // TODO: Open SPP socket to deviceAddress
+    // TODO: On success, begin reading continuous byte stream
+    throw new Error('connect() not yet implemented.');
   }
 
   /**
-   * Baglantiyi sonlandir.
+   * Terminates active Bluetooth session.
    */
   public async disconnect(): Promise<void> {
-    // TODO: acik soketi kapat ve dinleyiciyi durdur
-    throw new Error('disconnect() henuz uygulanmadi.');
+    // TODO: Close socket handle safely
+    throw new Error('disconnect() not yet implemented.');
   }
 
   /**
-   * ESP32'ye tek baytlik ASCII kontrol komutu gonder ('Z', 'S', 'P').
+   * Transmits single-byte ASCII command to hardware ('Z', 'S', 'P').
    */
   public async sendCommand(command: 'Z' | 'S' | 'P'): Promise<void> {
-    // TODO: soket uzerinden `${command}\n` gonder
-    // TODO: iletim hatasinda kullaniciya geri bildirim sagla
-    throw new Error('sendCommand() henuz uygulanmadi.');
+    // TODO: Write ASCII string `${command}\n` to open socket
+    throw new Error('sendCommand() not yet implemented.');
   }
 
   /**
-   * Gelen bayt akisindan 28 baytlik telemetri paketini ayristir.
+   * Unpacks 28-byte binary frame into TelemetryData object.
    */
   public parsePacket(buffer: Uint8Array): TelemetryData | null {
-    // TODO: 0xAA 0x55 basligini kontrol et
-    // TODO: Little-endian struct cozumlemesi yap
-    // TODO: CRC16 dogrulamasini gerceklestir
-    throw new Error('parsePacket() henuz uygulanmadi.');
+    // TODO: Validate header [0xAA, 0x55] and CRC-16 checksum
+    // TODO: Unpack little-endian fields into TelemetryData
+    throw new Error('parsePacket() not yet implemented.');
   }
 
   /**
-   * Gelen paketler icin dinleyici abone et.
+   * Subscribes a listener callback to validated telemetry frames.
    */
   public onDataReceived(callback: (data: TelemetryData) => void): () => void {
-    // TODO: event emitter uzerinden callback kaydet
-    // TODO: unsubscribe fonksiyonu dondur
+    // TODO: Register subscriber and return unsubscribe closure
     return () => {};
   }
 }

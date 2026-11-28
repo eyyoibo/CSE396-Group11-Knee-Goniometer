@@ -1,64 +1,56 @@
 """
-angle_calculator.py - Açı Hesaplama ve Sinyal İşleme Modülü
+Angle Calculator Module — Vector Trigonometry & Signal Filtering
 
-Bu modül, kalça-diz-ayak bileği noktalarından vektörel yöntemle diz açısı
-hesaplar. Ayrıca gürültü azaltma (Butterworth filtre) ve farklı örnekleme
-hızlarındaki verileri hizalama (doğrusal interpolasyon) işlevleri içerir.
+Calculates knee flexion-extension angles from 2D joint coordinates
+using vector dot products, applies digital Butterworth low-pass filtering,
+and performs linear temporal interpolation onto hardware timestamps.
 
-Açı Hesaplama Yöntemi:
-    V1 = hip - knee       (kalça-diz vektörü)
-    V2 = ankle - knee     (ayak bileği-diz vektörü)
-    cos(θ) = (V1 · V2) / (|V1| × |V2|)
-    θ = arccos(cos(θ))    (radyan → derece)
-
-Proje Ekibi: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin
-Akademik Danışman: Prof. Dr. Erkan Zergeroglu
+Project Team: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin, Cansu Bulut
 """
 
+from typing import Tuple
 import numpy as np
 
 
 class AngleCalculator:
-    """Diz açısı hesaplama, filtreleme ve zaman hizalama işlemleri."""
+    """
+    Vector trigonometry, signal filtering, and timestamp interpolation.
+    """
 
     def compute_angle(
         self,
-        hip_point: tuple[float, float],
-        knee_point: tuple[float, float],
-        ankle_point: tuple[float, float],
+        hip_point: Tuple[float, float],
+        knee_point: Tuple[float, float],
+        ankle_point: Tuple[float, float],
     ) -> float:
-        """Üç eklem noktasından diz açısını hesapla.
-
-        Kalça-diz ve ayak bileği-diz vektörleri arasındaki açıyı
-        nokta çarpım (dot product) formülüyle hesaplar.
-
-        Hesaplama adımları:
-            1. V1 = (hip.x - knee.x, hip.y - knee.y)
-            2. V2 = (ankle.x - knee.x, ankle.y - knee.y)
-            3. dot = V1[0]*V2[0] + V1[1]*V2[1]
-            4. mag1 = sqrt(V1[0]² + V1[1]²)
-            5. mag2 = sqrt(V2[0]² + V2[1]²)
-            6. cos_angle = dot / (mag1 * mag2)
-            7. cos_angle değerini [-1, 1] aralığına kırp (sayısal kararlılık)
-            8. angle_rad = arccos(cos_angle)
-            9. angle_deg = angle_rad * 180 / π
+        """
+        Calculates 2D knee flexion angle using vector dot product:
+            u = P_hip - P_knee
+            v = P_ankle - P_knee
+            cos(alpha) = clip( (u . v) / (|u| * |v|), -1.0, 1.0 )
+            theta_cam = 180.0 - arccos(cos(alpha))
 
         Args:
-            hip_point: Kalça noktası (x, y) koordinatları.
-            knee_point: Diz noktası (x, y) koordinatları.
-            ankle_point: Ayak bileği noktası (x, y) koordinatları.
+            hip_point: (x, y) 2D pixel coordinates of the hip.
+            knee_point: (x, y) 2D pixel coordinates of the knee.
+            ankle_point: (x, y) 2D pixel coordinates of the ankle.
 
         Returns:
-            Derece cinsinden diz açısı (0-180 aralığında).
+            Knee flexion angle in degrees (0.0 to 180.0 range).
         """
-        # TODO: V1 ve V2 vektörlerini numpy dizisi olarak oluştur
-        # TODO: np.dot ile skaler çarpımı hesapla
-        # TODO: np.linalg.norm ile vektör büyüklüklerini hesapla
-        # TODO: Sıfıra bölme koruması ekle (büyüklük sıfırsa 0.0 döndür)
-        # TODO: np.clip ile cos değerini [-1, 1] aralığına kırp
-        # TODO: np.arccos ile açıyı radyan cinsinden hesapla
-        # TODO: np.degrees ile dereceye çevir ve döndür
-        raise NotImplementedError("Açı hesaplama henüz uygulanmadı")
+        u = np.array([hip_point[0] - knee_point[0], hip_point[1] - knee_point[1]], dtype=np.float64)
+        v = np.array([ankle_point[0] - knee_point[0], ankle_point[1] - knee_point[1]], dtype=np.float64)
+
+        norm_u = np.linalg.norm(u)
+        norm_v = np.linalg.norm(v)
+
+        if norm_u < 1e-6 or norm_v < 1e-6:
+            return 0.0
+
+        cos_alpha = np.dot(u, v) / (norm_u * norm_v)
+        cos_alpha_clamped = np.clip(cos_alpha, -1.0, 1.0)
+        alpha_deg = float(np.degrees(np.arccos(cos_alpha_clamped)))
+        return float(180.0 - alpha_deg)
 
     def apply_butterworth_filter(
         self,
@@ -67,32 +59,27 @@ class AngleCalculator:
         fs: float = 30.0,
         order: int = 2,
     ) -> np.ndarray:
-        """Ham açı sinyaline düşük geçişli Butterworth filtresi uygula.
-
-        İnsan diz hareketi tipik olarak 0-6 Hz bant genişliğindedir.
-        Bu filtreyle yüksek frekanslı gürültü bileşenleri bastırılır.
-
-        Filtre tasarım adımları:
-            1. Nyquist frekansı: fn = fs / 2
-            2. Normalize kesim frekansı: wn = cutoff_hz / fn
-            3. scipy.signal.butter ile filtre katsayıları (b, a) üret
-            4. scipy.signal.filtfilt ile sıfır fazlı filtreleme uygula
+        """
+        Applies a zero-phase 2nd-order low-pass Butterworth filter.
 
         Args:
-            signal: Filtrelenecek açı zaman serisi (1B numpy dizisi).
-            cutoff_hz: Kesim frekansı Hz cinsinden (varsayılan 6.0 Hz).
-            fs: Örnekleme frekansı Hz cinsinden (varsayılan 30.0 Hz, kamera FPS).
-            order: Filtre derecesi (varsayılan 2).
+            signal: 1D NumPy array of raw angle values.
+            cutoff_hz: Cutoff frequency in Hz (default: 6.0 Hz).
+            fs: Camera frame rate (default: 30.0 FPS).
+            order: Filter order (default: 2).
 
         Returns:
-            Filtrelenmiş açı sinyali (aynı boyutta numpy dizisi).
+            Filtered 1D NumPy angle array.
         """
-        # TODO: scipy.signal.butter kullanarak filtre katsayılarını hesapla
-        #   - btype='low' (düşük geçişli)
-        #   - Wn = cutoff_hz / (fs / 2) (normalize frekans)
-        # TODO: scipy.signal.filtfilt ile çift yönlü (sıfır fazlı) filtreleme
-        # TODO: Sinyal çok kısaysa (< 3 * order kadar örnek) filtrelemeden döndür
-        raise NotImplementedError("Butterworth filtre henüz uygulanmadı")
+        from scipy.signal import butter, filtfilt
+
+        if len(signal) <= 3 * order:
+            return signal
+
+        nyquist = 0.5 * fs
+        normal_cutoff = cutoff_hz / nyquist
+        b, a = butter(order, normal_cutoff, btype="low", analog=False)
+        return filtfilt(b, a, signal)
 
     def interpolate_to_encoder_timestamps(
         self,
@@ -100,29 +87,26 @@ class AngleCalculator:
         camera_angles: np.ndarray,
         encoder_timestamps: np.ndarray,
     ) -> np.ndarray:
-        """Kamera açı verilerini enkoder zaman noktalarına interpole et.
-
-        Kamera 30 FPS, enkoder 50 Hz örnekleme hızına sahip olduğundan,
-        karşılaştırma için kamera verilerinin enkoder zaman eksenine
-        hizalanması gerekir.
-
-        Yöntem:
-            numpy.interp ile doğrusal (lineer) interpolasyon uygulanır.
-            Enkoder zaman aralığı dışında kalan noktalar NaN ile işaretlenir.
+        """
+        Linearly interpolates optical angles onto continuous hardware encoder timestamps.
 
         Args:
-            camera_timestamps: Kamera kare zaman damgaları (saniye, 1B dizi).
-            camera_angles: Kamera ile hesaplanan açı değerleri (derece, 1B dizi).
-            encoder_timestamps: Enkoder veri zaman damgaları (saniye, 1B dizi).
+            camera_timestamps: 1D array of optical frame timestamps (seconds).
+            camera_angles: 1D array of optical joint angles (degrees).
+            encoder_timestamps: 1D array of hardware encoder timestamps (seconds).
 
         Returns:
-            Enkoder zaman noktalarına interpole edilmiş açı değerleri.
-            Kamera zaman aralığı dışındaki noktalar NaN olarak döner.
+            Time-aligned angle array matching encoder timestamps.
         """
-        # TODO: camera_timestamps ve camera_angles boyut kontrolü
-        # TODO: np.interp ile doğrusal interpolasyon uygula
-        # TODO: Enkoder zaman noktalarından kamera aralığı dışında kalanları
-        #       NaN ile işaretle (extrapolasyon yapma)
-        # TODO: Görünürlük filtresi nedeniyle atlanan karelerdeki boşlukları
-        #       NaN olarak koru
-        raise NotImplementedError("Interpolasyon henüz uygulanmadı")
+        if len(camera_timestamps) == 0 or len(camera_angles) == 0:
+            return np.full_like(encoder_timestamps, np.nan, dtype=np.float64)
+
+        # Linear interpolation with NaN filling for extrapolation bounds
+        aligned_angles = np.interp(
+            encoder_timestamps,
+            camera_timestamps,
+            camera_angles,
+            left=np.nan,
+            right=np.nan,
+        )
+        return aligned_angles

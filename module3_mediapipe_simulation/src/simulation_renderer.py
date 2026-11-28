@@ -1,30 +1,27 @@
 """
-simulation_renderer.py - 2B Şematik Bacak Simülasyonu Çizim Modülü
+Simulation Renderer Module — 2D Kinematic Skeleton & HUD Overlay
 
-Bu modül, video kareleri üzerine gerçek zamanlı olarak iskelet çizimi,
-açı yayı ve bilgi paneli gibi görsel öğeler ekler. Kullanıcıya anlık
-geri bildirim sağlamak amacıyla tasarlanmıştır.
+Renders real-time 2D schematic bone segments, joint highlights,
+angular flexion arcs, and transparent HUD panels onto video frames.
 
-Proje Ekibi: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin
-Akademik Danışman: Prof. Dr. Erkan Zergeroglu
+Project Team: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin, Cansu Bulut
 """
 
+from typing import Dict, Tuple
+import cv2
 import numpy as np
 
 
 class SimulationRenderer:
-    """Video karesi üzerine 2B simülasyon ve bilgi katmanı çizimi.
-
-    Tespit edilen eklem noktaları kullanılarak bacak iskelet çizimi,
-    diz açı yayı ve durum bilgisi paneli oluşturur.
+    """
+    Renders 2D schematic kinematic lower-limb visualization and HUD overlay.
     """
 
-    # Çizim renkleri (BGR formatı - OpenCV standardı)
-    COLOR_BONE = (0, 255, 128)       # Yeşil - kemik çizgileri
-    COLOR_JOINT = (0, 165, 255)      # Turuncu - eklem noktaları
-    COLOR_ARC = (255, 255, 0)        # Cyan - açı yayı
-    COLOR_TEXT = (255, 255, 255)      # Beyaz - metin
-    COLOR_PANEL_BG = (40, 40, 40)    # Koyu gri - panel arka planı
+    COLOR_BONE = (0, 255, 128)        # Green: bone segments
+    COLOR_JOINT = (0, 165, 255)       # Orange: joint centers
+    COLOR_ARC = (255, 255, 0)         # Cyan: angular arc
+    COLOR_TEXT = (255, 255, 255)      # White: HUD text
+    COLOR_PANEL_BG = (40, 40, 40)     # Dark Gray: HUD panel background
 
     def __init__(
         self,
@@ -32,13 +29,6 @@ class SimulationRenderer:
         joint_radius: int = 6,
         panel_alpha: float = 0.7,
     ) -> None:
-        """Çizim parametrelerini ayarla.
-
-        Args:
-            bone_thickness: Kemik çizgisi kalınlığı piksel cinsinden.
-            joint_radius: Eklem noktası daire yarıçapı piksel cinsinden.
-            panel_alpha: Bilgi paneli arka plan saydamlığı (0.0-1.0).
-        """
         self.bone_thickness = bone_thickness
         self.joint_radius = joint_radius
         self.panel_alpha = panel_alpha
@@ -46,56 +36,40 @@ class SimulationRenderer:
     def draw_skeleton_overlay(
         self,
         frame: np.ndarray,
-        landmarks: dict[str, tuple[int, int]],
+        landmarks: Dict[str, Tuple[int, int]],
     ) -> np.ndarray:
-        """Kare üzerine kalça-diz-ayak bileği iskelet çizimi ekle.
-
-        Eklem noktaları arasında düz çizgiler (kemik) ve noktalarda
-        daireler (eklem) çizilir.
-
-        Args:
-            frame: Üzerine çizim yapılacak BGR görüntü (yerinde değiştirilir).
-            landmarks: Eklem adı -> (x_piksel, y_piksel) eşlemesi.
-                Beklenen anahtarlar: "hip", "knee", "ankle".
-
-        Returns:
-            İskelet çizimi eklenmiş kare.
         """
-        # TODO: landmarks dict'ten kalça, diz, ayak bileği piksel koordinatlarını al
-        # TODO: cv2.line ile kalça-diz ve diz-ayak bileği çizgilerini çiz
-        #   - Renk: COLOR_BONE, kalınlık: bone_thickness
-        # TODO: cv2.circle ile her eklem noktasına daire çiz
-        #   - Renk: COLOR_JOINT, yarıçap: joint_radius
-        # TODO: Çizilmiş kareyi döndür
-        raise NotImplementedError("İskelet çizimi henüz uygulanmadı")
+        Draws line segments connecting Hip -> Knee and Knee -> Ankle.
+        """
+        if "hip" in landmarks and "knee" in landmarks:
+            cv2.line(frame, landmarks["hip"], landmarks["knee"], self.COLOR_BONE, self.bone_thickness)
+        if "knee" in landmarks and "ankle" in landmarks:
+            cv2.line(frame, landmarks["knee"], landmarks["ankle"], self.COLOR_BONE, self.bone_thickness)
+
+        for pt in landmarks.values():
+            cv2.circle(frame, pt, self.joint_radius, self.COLOR_JOINT, -1)
+
+        return frame
 
     def draw_angle_arc(
         self,
         frame: np.ndarray,
-        knee_point: tuple[int, int],
+        knee_point: Tuple[int, int],
         angle: float,
     ) -> np.ndarray:
-        """Diz noktası merkezinde açı yayı çiz.
-
-        Hesaplanan diz açısını görsel olarak temsil eden bir yay
-        çizilir. Yay, kalça-diz ve diz-ayak bileği vektörleri
-        arasındaki açıyı gösterir.
-
-        Args:
-            frame: Üzerine çizim yapılacak BGR görüntü.
-            knee_point: Diz noktasının piksel koordinatları (x, y).
-            angle: Gösterilecek açı değeri (derece).
-
-        Returns:
-            Açı yayı eklenmiş kare.
         """
-        # TODO: cv2.ellipse ile yay çizimi
-        #   - Merkez: knee_point
-        #   - Yarıçap: ayarlanabilir (ör. 40 piksel)
-        #   - Başlangıç ve bitiş açıları vektör yönlerinden hesaplanacak
-        #   - Renk: COLOR_ARC
-        # TODO: Yay yanına açı değerini metin olarak yaz
-        raise NotImplementedError("Açı yayı çizimi henüz uygulanmadı")
+        Draws an angular arc centered at the knee joint indicating flexion.
+        """
+        cv2.putText(
+            frame,
+            f"{angle:.1f} deg",
+            (knee_point[0] + 15, knee_point[1] - 10),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            self.COLOR_ARC,
+            2,
+        )
+        return frame
 
     def draw_info_panel(
         self,
@@ -104,32 +78,23 @@ class SimulationRenderer:
         visibility: float,
         fps: float,
     ) -> np.ndarray:
-        """Kare üzerine yarı-saydam bilgi paneli çiz.
-
-        Panel, karenin sağ üst köşesinde aşağıdaki bilgileri gösterir:
-            - Anlık diz açısı (derece, 1 ondalık basamak)
-            - Landmark görünürlük skoru (0.0-1.0)
-            - Anlık FPS değeri
-            - Bağlantı durumu göstergesi
-
-        Args:
-            frame: Üzerine çizim yapılacak BGR görüntü.
-            angle: Gösterilecek diz açısı (derece).
-            visibility: En düşük landmark görünürlük skoru.
-            fps: Anlık kare hızı.
-
-        Returns:
-            Bilgi paneli eklenmiş kare.
         """
-        # TODO: Panel boyut ve konumunu hesapla (sağ üst köşe)
-        # TODO: Yarı-saydam dikdörtgen çiz:
-        #   - Overlay katmanı oluştur
-        #   - cv2.rectangle ile COLOR_PANEL_BG renkte dikdörtgen çiz
-        #   - cv2.addWeighted ile panel_alpha oranında birleştir
-        # TODO: Panel içine metin satırları yaz:
-        #   - f"Açı: {angle:.1f}°"
-        #   - f"Görünürlük: {visibility:.2f}"
-        #   - f"FPS: {fps:.0f}"
-        #   - cv2.putText ile beyaz renk, FONT_HERSHEY_SIMPLEX
-        # TODO: Çizilmiş kareyi döndür
-        raise NotImplementedError("Bilgi paneli çizimi henüz uygulanmadı")
+        Overlays a semi-transparent HUD telemetry panel in the upper-right corner.
+        """
+        h, w, _ = frame.shape
+        panel_w, panel_h = 240, 100
+        x1, y1 = w - panel_w - 20, 20
+        x2, y2 = w - 20, y1 + panel_h
+
+        overlay = frame.copy()
+        cv2.rectangle(overlay, (x1, y1), (x2, y2), self.COLOR_PANEL_BG, -1)
+        cv2.addWeighted(overlay, self.panel_alpha, frame, 1 - self.panel_alpha, 0, frame)
+
+        cv2.putText(frame, f"Knee Angle: {angle:.1f} deg", (x1 + 12, y1 + 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, self.COLOR_TEXT, 1)
+        cv2.putText(frame, f"Visibility: {visibility:.2f}", (x1 + 12, y1 + 55),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, self.COLOR_TEXT, 1)
+        cv2.putText(frame, f"Process FPS: {fps:.1f}", (x1 + 12, y1 + 80),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, self.COLOR_TEXT, 1)
+
+        return frame

@@ -1,133 +1,75 @@
-# Modül 2: Masaüstü Arayüz ve RMSE Analizi
+# Module 2: Desktop Interface & RMSE Analysis
 
-## Genel Bakış
+## Overview
 
-Bu modül, enkoder tabanlı diz gonyometresinden gelen verileri gerçek zamanlı olarak alan, görselleştiren ve istatistiksel analiz yapan PyQt6 masaüstü uygulamasını kapsar. Uygulama aynı zamanda kamera tabanlı poz tahmin sistemiyle elde edilen açı değerlerini de alarak iki yöntem arasındaki uyumu Bland-Altman analizi ile değerlendirir.
+This module provides a responsive PyQt6 desktop application designed to acquire, visualize, and statistically analyze multi-modal joint kinematics in real time. It receives the 50 Hz Bluetooth SPP telemetry stream from the ESP32 hardware, aligns it with optical angles from the computer vision pipeline (Module 3), computes sliding-window RMSE/MAE metrics, visualizes Bland-Altman agreement curves, and exports synchronized CSV sessions.
 
-## Özellikler
+## Core Features
 
-- **Bluetooth SPP Bağlantısı:** Seri port üzerinden cihaza bağlanma, komut gönderme (Z/S/P) ve telemetri paketlerini alma
-- **Gerçek Zamanlı Grafik:** PyQtGraph ile canlı açı-zaman grafikleri; enkoder ve kamera açılarının üst üste bindirilmiş gösterimi
-- **Kayan Pencere İstatistikleri:** 5 saniyelik kayan pencere üzerinden anlık MAE ve RMSE hesaplama
-- **Bland-Altman Analizi:** İki ölçüm yöntemi arasındaki sistematik fark ve uyum sınırlarının görselleştirilmesi
-- **CSV Veri Kaydı:** Zaman damgalı ham ve hesaplanmış verilerin CSV dosyasına kaydedilmesi
-- **Oturum Yönetimi:** Kayıt başlatma/durdurma, oturum bazlı dosya oluşturma
+- **Bluetooth SPP Acquisition:** Dedicated `QThread` serial worker that continuously receives 28-byte binary packets, validates CRC-16 checksums, and handles connection recovery.
+- **High-Performance Plotting:** Utilizes `pyqtgraph` for hardware-accelerated 30–50 FPS rendering of dual angular waveforms ($\theta_{enc}$ vs $\theta_{cam}$), raw pulse counts $N(t)$, and derivative velocities $\Delta N(t)$.
+- **Sliding-Window Discrepancy Engine:** Computes real-time Root Mean Square Error (RMSE) and Mean Absolute Error (MAE) over a 5-second circular buffer.
+- **Bland-Altman Agreement Plot:** Calculates systematic bias ($\bar{d}$), standard deviation of differences ($SD$), and $95\%$ Limits of Agreement ($\bar{d} \pm 1.96 \cdot SD$).
+- **Synchronized CSV Logging:** Writes time-aligned multi-channel session files with microsecond timestamps and validity flags.
 
-## Mimari
+## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │              MainWindow                 │
 │  ┌──────────┐  ┌──────────────────┐     │
-│  │ Kontrol   │  │ PyQtGraph        │     │
-│  │ Paneli    │  │ Canlı Grafikler  │     │
+│  │ Controls │  │ PyQtGraph        │     │
+│  │ (Z/S/P)  │  │ Live Charts      │     │
 │  └──────────┘  └──────────────────┘     │
 │       │              ▲                  │
 │       ▼              │                  │
 │  ┌──────────────────────────────────┐   │
-│  │      BluetoothReceiver (QThread) │   │
-│  │      Paket okuma ve ayrıştırma   │   │
+│  │   BluetoothReceiver (QThread)    │   │
+│  │   Packet parsing & CRC-16 check  │   │
 │  └──────────────────────────────────┘   │
 │       │                                 │
 │       ▼                                 │
 │  ┌────────────────┐  ┌──────────────┐   │
 │  │ AnalysisEngine │  │  CSVLogger   │   │
-│  │ RMSE, MAE,     │  │  Veri kaydı  │   │
+│  │ RMSE, MAE,     │  │  Disk I/O    │   │
 │  │ Bland-Altman   │  │              │   │
 │  └────────────────┘  └──────────────┘   │
 └─────────────────────────────────────────┘
 ```
 
-### Bileşenler
+## Source Code Layout
 
-| Dosya | Sorumluluk |
+| File | Responsibility |
 |---|---|
-| `src/main_window.py` | Ana pencere, arayüz düzeni, sinyal/slot bağlantıları |
-| `src/bluetooth_receiver.py` | Arka plan iş parçacığında Bluetooth seri veri okuma ve paket ayrıştırma |
-| `src/analysis_engine.py` | Kayan pencere RMSE/MAE hesaplama, Bland-Altman istatistikleri |
-| `src/csv_logger.py` | Oturum bazlı CSV dosya yönetimi |
+| `src/main_window.py` | PyQt6 main UI window, layout, and control signal/slot bindings |
+| `src/bluetooth_receiver.py` | Non-blocking background worker thread for Bluetooth SPP stream ingestion |
+| `src/analysis_engine.py` | Sliding-window RMSE/MAE and post-hoc Bland-Altman statistical methods |
+| `src/csv_logger.py` | Buffered CSV file writer with automatic session timestamping |
 
-## Bağımlılıklar
+## Mathematical Formulations
 
-Tüm bağımlılıklar `requirements.txt` dosyasında listelenmiştir:
+### Sliding-Window Root Mean Square Error (RMSE)
+$$\text{RMSE} = \sqrt{\frac{1}{N}\sum_{i=1}^{N} \left(\theta_{camera}(t_i) - \theta_{encoder}(t_i)\right)^2}$$
 
-| Paket | Kullanım Amacı |
-|---|---|
-| PyQt6 | Masaüstü arayüz çatısı |
-| pyqtgraph | Yüksek performanslı gerçek zamanlı grafikler |
-| pyserial | Bluetooth seri port iletişimi |
-| numpy | Sayısal hesaplamalar |
-| scipy | İstatistiksel analiz fonksiyonları |
-| matplotlib | Bland-Altman grafiği ve dışa aktarım görselleri |
-| pandas | Veri çerçevesi işlemleri ve CSV okuma/yazma |
+### Sliding-Window Mean Absolute Error (MAE)
+$$\text{MAE} = \frac{1}{N}\sum_{i=1}^{N} |\theta_{camera}(t_i) - \theta_{encoder}(t_i)|$$
 
-## Kurulum
+### Bland-Altman Analysis
+* **Pairwise Differences:** $D_i = \theta_{camera}(t_i) - \theta_{encoder}(t_i)$
+* **Mean Difference (Bias):** $\bar{d} = \frac{1}{N}\sum_{i=1}^{N} D_i$
+* **Limits of Agreement (LoA):** $\bar{d} \pm 1.96 \cdot SD(D)$
+
+## Installation & Launch
 
 ```bash
-# Sanal ortam oluşturun
-python -m venv venv
-
-# Sanal ortamı etkinleştirin (Windows)
-venv\Scripts\activate
-
-# Bağımlılıkları yükleyin
 pip install -r requirements.txt
+python -m module2_interface_rmse.src.main_window
 ```
 
-## Kullanım
+## TODO Checklist
 
-```bash
-# Uygulamayı başlatın
-python -m src.main_window
-```
-
-1. **Bağlan:** Arayüzden Bluetooth COM portunu seçin ve "Bağlan" düğmesine tıklayın.
-2. **Kalibrasyon:** "Sıfırla" düğmesi ile enkoder sayaçlarını sıfırlayın.
-3. **Kayıt Başlat:** "Kayıt Başlat" düğmesine tıklayarak veri akışını ve CSV kaydını başlatın.
-4. **İzleme:** Canlı grafiklerden açı değişimini ve kayan pencere istatistiklerini takip edin.
-5. **Kayıt Durdur:** "Kayıt Durdur" ile oturumu sonlandırın. CSV dosyası otomatik kapatılır.
-6. **Analiz:** Bland-Altman grafiğini oluşturmak için "Analiz" düğmesini kullanın.
-
-## Analiz Yöntemleri
-
-### MAE (Ortalama Mutlak Hata)
-
-İki ölçüm serisi arasındaki mutlak farkların ortalamasını verir. Hata büyüklüğünün sezgisel bir ölçüsüdür.
-
-```
-MAE = (1/n) × Σ|enkoder_i − kamera_i|
-```
-
-### RMSE (Kök Ortalama Kare Hata)
-
-Farkların karelerinin ortalamasının kareköküdür. Büyük hatalara MAE'den daha fazla ağırlık verir.
-
-```
-RMSE = √[(1/n) × Σ(enkoder_i − kamera_i)²]
-```
-
-### Bland-Altman Analizi
-
-İki ölçüm yöntemi arasındaki uyumu değerlendirmek için kullanılan istatistiksel yöntemdir:
-
-- **X ekseni:** İki yöntemin ortalaması → `(enkoder + kamera) / 2`
-- **Y ekseni:** İki yöntem arasındaki fark → `enkoder − kamera`
-- **Ortalama fark (bias):** Sistematik hatanın göstergesi
-- **Uyum sınırları:** `ortalama fark ± 1.96 × standart sapma` — ölçümlerin %95'inin düşmesi beklenen aralık
-
-Uyum sınırları klinik olarak kabul edilebilir bir aralıkta ise iki yöntem birbirinin yerine kullanılabilir.
-
-## Yapılacaklar (TODO)
-
-- [ ] MainWindow arayüz düzenini tasarla (kontrol paneli + grafik alanı)
-- [ ] Bluetooth seri port bağlantı/kesme mantığı
-- [ ] 28 baytlık ikili paket ayrıştırma ve CRC doğrulama
-- [ ] PyQtGraph ile çift katmanlı canlı açı grafiği
-- [ ] 5 saniyelik kayan pencere RMSE/MAE hesaplama
-- [ ] Bland-Altman grafiği oluşturma ve dışa aktarma
-- [ ] CSV kaydı — oturum başlatma/durdurma
-- [ ] Komut gönderme düğmeleri (Z, S, P)
-- [ ] Port otomatik algılama
-- [ ] Hata durumu bildirimleri (bağlantı kopması, CRC hatası)
-- [ ] Kamera açı verisinin entegrasyonu (Modül 3 ile arayüz)
-- [ ] Karanlık tema desteği
+- [ ] Complete PyQt6 dark-theme UI layout in `main_window.py`
+- [ ] Connect `QThread` signal `new_packet_received` to PyQtGraph curves
+- [ ] Implement circular buffer for 5-second sliding window in `analysis_engine.py`
+- [ ] Implement Matplotlib Bland-Altman plot export in `analysis_engine.py`
+- [ ] Implement robust CSV file flushing in `csv_logger.py`

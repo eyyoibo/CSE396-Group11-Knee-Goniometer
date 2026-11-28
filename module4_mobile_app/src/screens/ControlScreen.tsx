@@ -1,31 +1,27 @@
 /**
  * @file ControlScreen.tsx
- * @brief Uzaktan Z/S/P Kalibrasyon ve Seans Kontrol Ekrani
+ * @brief Remote Z/S/P Hardware Calibration & Session Control Screen
  *
- * Proje Ekibi: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin
- * Akademik Danisman: Prof. Dr. Erkan Zergeroglu
+ * Project Team: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin, Cansu Bulut
  */
 
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Alert } from 'react-native';
 
-// import { BluetoothService } from '../services/BluetoothService';
-
 export const ControlScreen: React.FC = () => {
   const [sessionActive, setSessionActive] = useState<boolean>(false);
-  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
 
   const handleZeroCalibration = () => {
     Alert.alert(
-      'Sifir Kalibrasyonu (Z)',
-      'Katilimcinin bacaklari duz konumda mi? Mevcut enkoder sayaci 0 derece referansi olarak ayarlanacaktir.',
+      'Zero Calibration (Z)',
+      'Is the participant standing in full neutral extension? Current encoder counts will be set as 0.0° baseline.',
       [
-        { text: 'Iptal', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         { 
-          text: 'Sifirla', 
+          text: 'Calibrate', 
           onPress: () => {
             // TODO: BluetoothService.getInstance().sendCommand('Z');
-            console.log("Komut gonderildi: Z");
+            console.log("Transmitted command: 'Z'");
           } 
         }
       ]
@@ -35,53 +31,53 @@ export const ControlScreen: React.FC = () => {
   const handleStartSession = () => {
     // TODO: BluetoothService.getInstance().sendCommand('S');
     setSessionActive(true);
-    console.log("Komut gonderildi: S");
+    console.log("Transmitted command: 'S'");
   };
 
   const handlePauseSession = () => {
     // TODO: BluetoothService.getInstance().sendCommand('P');
     setSessionActive(false);
-    console.log("Komut gonderildi: P");
+    console.log("Transmitted command: 'P'");
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Uzaktan ESP32 Komut Kontrolu</Text>
+      <Text style={styles.title}>Remote ESP32 Hardware Controls</Text>
 
-      {/* Sifir Kalibrasyon Butonu */}
+      {/* Zero Calibration Button */}
       <TouchableOpacity 
         style={[styles.btn, styles.zeroBtn]}
         onPress={handleZeroCalibration}
       >
-        <Text style={styles.btnText}>[Z] SIFIR KALIBRASYONU</Text>
-        <Text style={styles.btnSub}>Mevcut durusu 0° referansi yap</Text>
+        <Text style={styles.btnText}>[Z] ZERO CALIBRATION</Text>
+        <Text style={styles.btnSub}>Calibrate current posture as 0.0°</Text>
       </TouchableOpacity>
 
-      {/* Baslat Butonu */}
+      {/* Start Session Button */}
       <TouchableOpacity 
         style={[styles.btn, styles.startBtn, sessionActive && styles.disabledBtn]}
         onPress={handleStartSession}
         disabled={sessionActive}
       >
-        <Text style={styles.btnText}>[S] OLCUMU BASLAT</Text>
-        <Text style={styles.btnSub}>50 Hz telemetri akisini baslat</Text>
+        <Text style={styles.btnText}>[S] START STREAMING</Text>
+        <Text style={styles.btnSub}>Begin 50 Hz telemetry transmission</Text>
       </TouchableOpacity>
 
-      {/* Durdur Butonu */}
+      {/* Pause Session Button */}
       <TouchableOpacity 
         style={[styles.btn, styles.pauseBtn, !sessionActive && styles.disabledBtn]}
         onPress={handlePauseSession}
         disabled={!sessionActive}
       >
-        <Text style={styles.btnText}>[P] OLCUMU DURAKLAT</Text>
-        <Text style={styles.btnSub}>Paket iletimini dondur</Text>
+        <Text style={styles.btnText}>[P] PAUSE STREAMING</Text>
+        <Text style={styles.btnSub}>Halt telemetry transmission</Text>
       </TouchableOpacity>
 
-      {/* Oturum Durumu */}
+      {/* Active State Banner */}
       <View style={styles.statusBox}>
-        <Text style={styles.statusLabel}>Oturum Durumu:</Text>
+        <Text style={styles.statusLabel}>Session Status:</Text>
         <Text style={[styles.statusValue, sessionActive ? styles.activeText : styles.inactiveText]}>
-          {sessionActive ? 'KAYIT AKTIF (50 Hz)' : 'BEKLEMEDE'}
+          {sessionActive ? 'STREAMING ACTIVE (50 Hz)' : 'IDLE / PAUSED'}
         </Text>
       </View>
     </View>

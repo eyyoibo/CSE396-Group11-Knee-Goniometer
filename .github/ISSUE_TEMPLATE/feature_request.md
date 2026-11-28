@@ -1,36 +1,30 @@
 ---
-name: Özellik Talebi
-about: Yeni bir özellik veya iyileştirme önermek için bu şablonu kullanın
-title: "[ÖZELLİK] "
+name: Feature Request
+about: Suggest an idea or architectural improvement for this project
+title: "[FEATURE] "
 labels: enhancement
 assignees: ''
 ---
 
-## Özellik Açıklaması
+## Feature Description
+A clear and concise description of what the feature is.
 
-Önerilen özelliği açık ve net bir şekilde tanımlayın.
+## Motivation & Problem Statement
+Why is this feature needed? What problem does it solve?
 
-## Motivasyon
+## Proposed Implementation
+Describe how you envision this feature being implemented.
 
-Bu özelliğe neden ihtiyaç duyulmaktadır? Hangi problemi çözmektedir?
+## Alternatives Considered
+A clear and concise description of any alternative solutions or features you've considered.
 
-## Önerilen Çözüm
+## Related Module
+Check all modules that apply:
+- [ ] **Module 1 — Hardware & Encoder Signal Processing** (ESP32, PCNT, Differential Receiver)
+- [ ] **Module 2 — Desktop Interface & RMSE Analysis** (PyQt6, PyQtGraph, Live Discrepancy)
+- [ ] **Module 3 — Simulation & MediaPipe Pose Estimation** (OpenCV, Vector Kinematics)
+- [ ] **Module 4 — Mobile Application** (React Native, Remote Z/S/P Control)
+- [ ] **Shared / Protocols** (Packet Parser, Synthetic Data Generator)
 
-Özelliğin nasıl gerçekleştirilebileceğine dair önerinizi açıklayın.
-
-## Değerlendirilen Alternatifler
-
-Düşündüğünüz alternatif çözümleri ve neden tercih edilmediğini belirtin.
-
-## İlgili Modül
-
-Bu özellik hangi modül(ler) ile ilişkilidir?
-
-- [ ] **M1 — Donanım ve Gömülü Yazılım** (Encoder, ESP32, Bluetooth iletişimi)
-- [ ] **M2 — Masaüstü Arayüz** (PyQt/Tkinter GUI, gerçek zamanlı grafik, veri kaydı)
-- [ ] **M3 — Kamera ve Görüntü İşleme** (MediaPipe, açı hesaplama, kamera yönetimi)
-- [ ] **M4 — Mobil Uygulama** (React Native, BLE bağlantısı, mobil arayüz)
-
-## Ek Bağlam
-
-Özellikle ilgili eklemek istediğiniz başka bilgiler, görseller veya referanslar varsa buraya yazın.
+## Additional Context
+Add any other context, mockups, or screenshots about the feature request here.

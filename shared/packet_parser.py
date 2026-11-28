@@ -1,37 +1,29 @@
 """
-Telemetri Paketi Cozumleyici (Packet Parser)
+Telemetry Packet Parser Module
 
-ESP32 tarafindan Bluetooth SPP uzerinden gonderilen 28 baytlik ikili
-telemetri paketlerini cozer ve dogrular.
+Decodes and validates 28-byte packed binary telemetry frames
+streamed by the ESP32 firmware over Bluetooth Classic SPP.
 
-Paket Formati:
+Frame Specification:
     Header(2B) + SeqNum(4B) + Timestamp(4B) + LeftCount(4B) +
     RightCount(4B) + LeftAngle(4B) + RightAngle(4B) + CRC16(2B)
-    = 28 Bayt toplam
+    = 28 Bytes Total
 
-Kullanim:
-    from shared.packet_parser import PacketParser
-
-    parser = PacketParser()
-    result = parser.parse(raw_bytes)
-    if result is not None:
-        print(f"Sol aci: {result.left_angle}, Sag aci: {result.right_angle}")
+Project Team: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin, Cansu Bulut
 """
 
 import struct
 from dataclasses import dataclass
 from typing import Optional
 
-
-# --- Sabitler ---
 PACKET_HEADER = bytes([0xAA, 0x55])
 PACKET_SIZE = 28
-STRUCT_FORMAT = "<2sIIiiffH"  # little-endian: header(2s), seq(I), ts(I), lc(i), rc(i), la(f), ra(f), crc(H)
+STRUCT_FORMAT = "<2sIIiiffH"
 
 
 @dataclass
 class TelemetryPacket:
-    """Cozumlenmis telemetri paketini temsil eder."""
+    """Represents an unpacked and validated telemetry frame."""
     sequence_number: int
     timestamp_ms: int
     left_count: int
@@ -42,70 +34,69 @@ class TelemetryPacket:
 
 class PacketParser:
     """
-    ESP32 telemetri paketlerini cozen sinif.
-
-    TODO: Asagidaki metodlari gercekleyin:
+    Parser and CRC-16 validator for binary hardware telemetry packets.
     """
 
     def parse(self, raw_data: bytes) -> Optional[TelemetryPacket]:
         """
-        28 baytlik ham veriyi cozumle ve dogrula.
+        Unpacks and validates a 28-byte raw telemetry slice.
 
         Args:
-            raw_data: 28 baytlik ham paket verisi
+            raw_data: 28-byte raw binary slice.
 
         Returns:
-            Basarili ise TelemetryPacket, hata varsa None
-
-        TODO:
-            - Paket boyutunu kontrol et (28 bayt)
-            - Header baytlarini dogrula (0xAA, 0x55)
-            - struct.unpack ile alanlari ayristir
-            - CRC16 dogrulamasi yap
-            - TelemetryPacket nesnesi olustur ve dondur
+            TelemetryPacket instance if valid, None if malformed or CRC invalid.
         """
-        raise NotImplementedError("parse() henuz gerceklenmedi")
+        if len(raw_data) != PACKET_SIZE:
+            return None
+
+        if raw_data[:2] != PACKET_HEADER:
+            return None
+
+        try:
+            header, seq, ts, lc, rc, la, ra, crc = struct.unpack(STRUCT_FORMAT, raw_data)
+        except struct.error:
+            return None
+
+        calculated_crc = self.compute_crc16(raw_data[:26])
+        if calculated_crc != crc:
+            return None
+
+        return TelemetryPacket(
+            sequence_number=seq,
+            timestamp_ms=ts,
+            left_count=lc,
+            right_count=rc,
+            left_angle=la,
+            right_angle=ra,
+        )
 
     def find_packet_start(self, buffer: bytes) -> int:
         """
-        Bayt tamponunda bir sonraki paket basliginin konumunu bul.
-
-        Args:
-            buffer: Aranacak bayt tamponu
+        Scans a byte buffer for the magic header sequence (0xAA 0x55).
 
         Returns:
-            Baslik konumu (index), bulunamazsa -1
-
-        TODO:
-            - 0xAA 0x55 siralisinı tampon icerisinde ara
-            - Bulunan ilk konumu dondur
+            Start index of header if found, -1 otherwise.
         """
-        raise NotImplementedError("find_packet_start() henuz gerceklenmedi")
+        return buffer.find(PACKET_HEADER)
 
     def compute_crc16(self, data: bytes) -> int:
         """
-        CRC-16 kontrol toplamini hesapla.
-
-        Args:
-            data: CRC hesaplanacak baytlar (CRC alani haric ilk 26 bayt)
-
-        Returns:
-            16-bit CRC degeri
-
-        TODO:
-            - CRC-16/CCITT veya CRC-16/MODBUS algoritmasini uygula
-            - ESP32 firmware ile ayni algoritmayı kullan
+        Computes standard CRC-16/CCITT checksum over input bytes.
         """
-        raise NotImplementedError("compute_crc16() henuz gerceklenmedi")
+        crc = 0xFFFF
+        for byte in data:
+            crc ^= (byte << 8)
+            for _ in range(8):
+                if crc & 0x8000:
+                    crc = ((crc << 1) ^ 0x1021) & 0xFFFF
+                else:
+                    crc = (crc << 1) & 0xFFFF
+        return crc
 
     def validate_packet(self, raw_data: bytes) -> bool:
-        """
-        Paketin gecerliligini kontrol et.
-
-        TODO:
-            - Boyut kontrolu
-            - Header kontrolu
-            - CRC kontrolu
-            - Aci degerlerinin makul aralikta olup olmadigini kontrol et (0-180 derece)
-        """
-        raise NotImplementedError("validate_packet() henuz gerceklenmedi")
+        """Returns True if raw data satisfies packet formatting and bounds."""
+        pkt = self.parse(raw_data)
+        if pkt is None:
+            return False
+        return 0.0 <= pkt.left_angle <= 180.0 and 0.0 <= pkt.right_angle <= 180.0

@@ -1,7 +1,7 @@
 {
   "name": "knee-goniometer-mobile",
   "version": "1.0.0",
-  "description": "Cift Enkoderli Kablosuz Diz Goniyometresi Mobil Izleme ve Kontrol Uygulamasi",
+  "description": "Dual-Encoder Wireless Knee Goniometer Mobile Monitoring and Control Companion App",
   "main": "index.js",
   "scripts": {
     "start": "expo start",

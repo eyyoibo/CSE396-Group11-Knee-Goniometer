@@ -1,15 +1,15 @@
 """
-Diz Gonyometresi — Ana Pencere Modülü
+Main Window Module — Desktop GUI Application
 
-PyQt6 tabanlı masaüstü arayüzün ana pencere sınıfını içerir.
-Gerçek zamanlı grafik gösterimi, Bluetooth bağlantı yönetimi
-ve oturum kontrol işlevlerini barındırır.
+PyQt6-based main application window for real-time knee goniometer telemetry
+acquisition, live angular waveform plotting, sliding-window discrepancy analytics,
+and synchronized session recording.
 
-Proje Ekibi: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin
-Danışman: Prof. Dr. Erkan Zergeroglu
+Project Team: Ibrahim Halil Dogan, Mert Canoglu, Cem Baygin, Cansu Bulut
 """
 
 import sys
+from typing import Optional
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -27,147 +27,115 @@ from PyQt6.QtCore import pyqtSignal, pyqtSlot
 
 class MainWindow(QMainWindow):
     """
-    Uygulamanın ana penceresi.
+    Main application window class.
 
-    Sorumluluklar:
-    - Arayüz bileşenlerinin oluşturulması ve yerleştirilmesi
-    - BluetoothReceiver iş parçacığının yaşam döngüsü yönetimi
-    - Canlı grafiklerin güncellenmesi
-    - Oturum kayıt kontrolü
+    Responsibilities:
+    - Construct and manage the layout of control panels and chart widgets
+    - Manage the lifecycle of the BluetoothReceiver worker QThread
+    - Update live pyqtgraph angle and pulse curves at steady display refresh rates
+    - Trigger Z/S/P hardware commands and control session CSV logging
     """
 
-    # ----- Sinyaller -----
-    # TODO: Gerekli özel sinyalleri burada tanımlayın
-    # Örneğin: command_requested = pyqtSignal(str)
+    # Custom signals
+    command_requested = pyqtSignal(str)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("Diz Gonyometresi — Veri Arayüzü")
-        self.resize(1200, 700)
+        self.setWindowTitle("Dual-Encoder Knee Goniometer & Kinematics Analyzer")
+        self.resize(1280, 750)
         self._init_ui()
 
-    # ----------------------------------------------------------------
-    # _init_ui
-    # ----------------------------------------------------------------
     def _init_ui(self) -> None:
         """
-        Arayüz bileşenlerini oluşturur ve ana pencereye yerleştirir.
+        Constructs UI components, layouts, toolbars, and status bars.
 
         TODO:
-        - Sol panel: COM port seçici (QComboBox), Bağlan/Kes düğmeleri,
-          Sıfırla/Başlat/Duraklat komut düğmeleri, Kayıt Başlat/Durdur
-        - Sağ panel: PyQtGraph PlotWidget (açı-zaman grafiği),
-          ikinci PlotWidget veya istatistik etiketi (RMSE/MAE)
-        - Alt durum çubuğu: bağlantı durumu, paket sayacı
+        - Add connection controls: COM port dropdown, Refresh button, Connect/Disconnect button
+        - Add remote hardware controls: Zero Calibration [Z], Start [S], Pause [P]
+        - Add 3 pyqtgraph PlotWidgets:
+            1. Joint Flexion Angle vs Time (Encoder vs Camera overlay)
+            2. Cumulative Encoder Quadrature Count N(t)
+            3. Sample-to-Sample Velocity Derivative Delta N(t)
+        - Add real-time discrepancy analytics side panel:
+            - Live 5s Rolling RMSE (degrees)
+            - Live 5s Rolling MAE (degrees)
+            - Current Camera Landmark Visibility Score
         """
-        pass
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+        main_layout = QHBoxLayout(central_widget)
 
-    # ----------------------------------------------------------------
-    # connect_bluetooth
-    # ----------------------------------------------------------------
+        status_bar = QStatusBar(self)
+        self.setStatusBar(status_bar)
+        status_bar.showMessage("System Ready. Disconnected.")
+
     @pyqtSlot()
     def connect_bluetooth(self) -> None:
         """
-        Seçilen COM portu üzerinden Bluetooth SPP bağlantısını kurar.
+        Initiates Bluetooth SPP serial connection via background QThread.
 
         TODO:
-        - Seçili COM port adını al
-        - BluetoothReceiver örneği oluştur ve başlat
-        - new_packet_received sinyalini on_new_packet_received slotuna bağla
-        - Durum çubuğunu güncelle
-        - Bağlantı hatası durumunda kullanıcıya bilgi ver
+        - Instantiate BluetoothReceiver with selected serial port
+        - Connect signals: new_packet_received -> on_new_packet_received
+        - Start worker thread and update UI state
         """
         pass
 
-    # ----------------------------------------------------------------
-    # disconnect_bluetooth
-    # ----------------------------------------------------------------
     @pyqtSlot()
     def disconnect_bluetooth(self) -> None:
         """
-        Aktif Bluetooth bağlantısını güvenli şekilde kapatır.
+        Terminates active serial connection and stops background thread.
 
         TODO:
-        - BluetoothReceiver iş parçacığını durdur (stop flag + quit + wait)
-        - Seri portu kapat
-        - Arayüz düğmelerini başlangıç durumuna döndür
-        - Durum çubuğunu güncelle
+        - Stop receiver worker safely and close port
+        - Update UI toolbar states to disconnected
         """
         pass
 
-    # ----------------------------------------------------------------
-    # start_recording
-    # ----------------------------------------------------------------
     @pyqtSlot()
     def start_recording(self) -> None:
         """
-        Veri kaydı oturumunu başlatır.
+        Triggers session recording and sends 'S' command to hardware.
 
         TODO:
-        - CSVLogger ile yeni oturum dosyası oluştur
-        - Cihaza 'S' (Start) komutu gönder
-        - Kayıt göstergesini aktif olarak işaretle
+        - Initialize CSVLogger with new timestamped session file
+        - Transmit 'S' command over Bluetooth
+        - Update status bar and recording indicators
         """
         pass
 
-    # ----------------------------------------------------------------
-    # stop_recording
-    # ----------------------------------------------------------------
     @pyqtSlot()
     def stop_recording(self) -> None:
         """
-        Veri kaydı oturumunu sonlandırır.
+        Halts session recording and sends 'P' command to hardware.
 
         TODO:
-        - Cihaza 'P' (Pause) komutu gönder
-        - CSVLogger oturumunu kapat
-        - Kayıt göstergesini pasif olarak işaretle
-        - Toplam kayıt süresi ve satır sayısını göster
+        - Transmit 'P' command over Bluetooth
+        - Flush and close CSV file in CSVLogger
+        - Compute post-hoc session summary statistics (RMSE, MAE, Bland-Altman)
         """
         pass
 
-    # ----------------------------------------------------------------
-    # update_plots
-    # ----------------------------------------------------------------
-    def update_plots(self, encoder_angles: list, camera_angles: list,
-                     timestamps: list) -> None:
+    @pyqtSlot(object)
+    def on_new_packet_received(self, packet: object) -> None:
         """
-        Canlı grafikleri yeni veri noktalarıyla günceller.
+        Callback triggered when a validated 28-byte packet is received.
 
         TODO:
-        - Enkoder açı serisini grafiğe ekle (mavi çizgi)
-        - Kamera açı serisini grafiğe ekle (kırmızı çizgi)
-        - X eksenini kaydırarak son N saniyeyi göster
-        - RMSE/MAE etiketlerini AnalysisEngine sonuçlarıyla güncelle
-        """
-        pass
-
-    # ----------------------------------------------------------------
-    # on_new_packet_received
-    # ----------------------------------------------------------------
-    @pyqtSlot(dict)
-    def on_new_packet_received(self, packet_data: dict) -> None:
-        """
-        BluetoothReceiver'dan yeni paket geldiğinde çağrılır.
-
-        @param packet_data: Ayrıştırılmış paket alanlarını içeren sözlük
-                            (seq, timestamp_ms, left_angle, right_angle, ...)
-
-        TODO:
-        - Paket verilerini dahili veri tamponlarına ekle
-        - CSVLogger aktifse satır kaydet
-        - AnalysisEngine'e yeni veriyi bildir
-        - update_plots çağır
-        - Durum çubuğundaki paket sayacını artır
+        - Push packet data into circular buffer
+        - Update PyQtGraph plots
+        - Pass data to CSVLogger if recording is active
+        - Trigger sliding-window RMSE/MAE calculation in AnalysisEngine
         """
         pass
 
 
-# ----------------------------------------------------------------
-# Ana giriş noktası
-# ----------------------------------------------------------------
-if __name__ == "__main__":
+def main() -> None:
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()
